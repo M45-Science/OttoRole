@@ -5,9 +5,11 @@ import (
 	"time"
 )
 
-const version = "0.0.001"
+const version = "0.0.1"
 
 func main() {
 
 	glob.Uptime = time.Now()
+
+	
 }
