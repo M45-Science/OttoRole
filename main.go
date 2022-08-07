@@ -2,6 +2,7 @@ package main
 
 import (
 	"RoleKeeper/cfg"
+	"RoleKeeper/command"
 	"RoleKeeper/cons"
 	"RoleKeeper/glob"
 	"RoleKeeper/rclog"
@@ -81,6 +82,9 @@ func BotReady(s *discordgo.Session, r *discordgo.Ready) {
 	if err != nil {
 		rclog.DoLog(err.Error())
 	}
+
+	s.AddHandler(command.SlashCommand)
+	command.RegisterCommands(s, "916844097883471923")
 
 	rclog.DoLog("Discord bot ready")
 }
