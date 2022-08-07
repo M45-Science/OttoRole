@@ -5,10 +5,14 @@ import (
 	"time"
 )
 
-var Uptime time.Time
+var (
+	Uptime time.Time
 
-var LogDesc *os.File
-var LogName string
+	LogDesc *os.File
+	LogName string
+
+	GuildList map[uint64]GuildSettings
+)
 
 type roleData struct {
 	Name string
@@ -21,5 +25,3 @@ type GuildSettings struct {
 	Premium  int
 	Roles    []roleData
 }
-
-var GuildList map[uint64]GuildSettings

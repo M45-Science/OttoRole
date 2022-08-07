@@ -1,4 +1,7 @@
 package cons
 
-const DBName = "dbdata.json"
-const ConfigFile = "config.json"
+const (
+	DBName             = "dbdata.json"
+	ConfigFile         = "config.json"
+	MaxDiscordAttempts = 100
+)
