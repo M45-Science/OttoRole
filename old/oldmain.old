@@ -9,12 +9,12 @@ import (
 	"syscall"
 	"time"
 
-	"./support"
+	"RoleKeeper/support"
+
 	"github.com/bwmarrin/discordgo"
-	_ "github.com/joho/godotenv/autoload"
 )
 
-//v0.0.004 -- 4-24-2020-3-20-AM
+// v0.0.004 -- 4-24-2020-3-20-AM
 const MaxDBItems = 128
 
 var DS *discordgo.Session
