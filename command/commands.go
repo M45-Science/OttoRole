@@ -8,5 +8,10 @@ var cmds = []Command{
 			Name:        "role",
 			Description: "Assign roles to yourself!",
 		},
+		Command: RoleCommand,
 	},
+}
+
+func RoleCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	
 }
