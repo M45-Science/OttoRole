@@ -88,12 +88,11 @@ func BotReady(s *discordgo.Session, r *discordgo.Ready) {
 	command.RegisterCommands(s, "916844097883471923")
 
 	rclog.DoLog("Discord bot ready")
-	time.Sleep(time.Second * 5)
 	rclog.DoLog("Making test map...")
 
-	var tSize uint64 = 100000000
+	var tSize uint64 = 1000000
 	var i uint64
-	glob.Guilds = make(map[uint64]*glob.GuildData)
+	glob.Guilds = make(map[uint64]*glob.GuildData, tSize)
 	tnow := time.Now().Unix()
 	tRoles := []glob.RoleData{}
 	//Make some role data
@@ -105,11 +104,17 @@ func BotReady(s *discordgo.Session, r *discordgo.Ready) {
 	start := time.Now()
 
 	var rid uint64
+	var idlist []uint64
 	//Test map
 	for i = 0; i < tSize; i++ {
 		rid = rand.Uint64()
-		newGuild := glob.GuildData{Added: tnow, Modified: tnow, Donator: 0, Premium: 0, Roles: tRoles}
-		glob.Guilds[rid] = &newGuild
+		if glob.Guilds[rid] == nil {
+			newGuild := glob.GuildData{Added: tnow, Modified: tnow, Donator: 0, Premium: 0, Roles: tRoles}
+			glob.Guilds[rid] = &newGuild
+		}
+		if i%100 == 0 {
+			idlist = append(idlist, rid)
+		}
 	}
 
 	end := time.Now()
@@ -117,8 +122,15 @@ func BotReady(s *discordgo.Session, r *discordgo.Ready) {
 	rclog.DoLog("Make map took: " + end.Sub(start).String())
 
 	start = time.Now()
-	GetData := glob.Guilds[rid].Roles[1].Name
+	var GetData uint64
+	for _, i := range idlist {
+		GetData = glob.Guilds[i].Roles[1].ID
+	}
 	end = time.Now()
 
-	rclog.DoLog("Lookup took: " + end.Sub(start).String() + " : " + GetData)
+	if GetData != 0 {
+		//
+	}
+	rclog.DoLog("Lookup took: " + end.Sub(start).String())
+	rclog.DoLog(fmt.Sprintf("Lookups: %v", len(idlist)))
 }
