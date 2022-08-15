@@ -85,7 +85,7 @@ func BotReady(s *discordgo.Session, r *discordgo.Ready) {
 	}
 
 	s.AddHandler(command.SlashCommand)
-	command.RegisterCommands(s, "916844097883471923")
+	command.RegisterCommands(s, cfg.Config.App)
 
 	rclog.DoLog("Discord bot ready")
 	rclog.DoLog("Making test map...")
