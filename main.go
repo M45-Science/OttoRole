@@ -7,6 +7,7 @@ import (
 	"RoleKeeper/glob"
 	"RoleKeeper/rclog"
 	"fmt"
+	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
@@ -87,4 +88,37 @@ func BotReady(s *discordgo.Session, r *discordgo.Ready) {
 	command.RegisterCommands(s, "916844097883471923")
 
 	rclog.DoLog("Discord bot ready")
+	time.Sleep(time.Second * 5)
+	rclog.DoLog("Making test map...")
+
+	var tSize uint64 = 100000000
+	var i uint64
+	glob.Guilds = make(map[uint64]*glob.GuildData)
+	tnow := time.Now().Unix()
+	tRoles := []glob.RoleData{}
+	//Make some role data
+	for i = 0; i < 15; i++ {
+		rid := rand.Uint64()
+		tRoles = append(tRoles, glob.RoleData{Name: fmt.Sprintf("%012d", rid), ID: rid})
+	}
+
+	start := time.Now()
+
+	var rid uint64
+	//Test map
+	for i = 0; i < tSize; i++ {
+		rid = rand.Uint64()
+		newGuild := glob.GuildData{Added: tnow, Modified: tnow, Donator: 0, Premium: 0, Roles: tRoles}
+		glob.Guilds[rid] = &newGuild
+	}
+
+	end := time.Now()
+
+	rclog.DoLog("Make map took: " + end.Sub(start).String())
+
+	start = time.Now()
+	GetData := glob.Guilds[rid].Roles[1].Name
+	end = time.Now()
+
+	rclog.DoLog("Lookup took: " + end.Sub(start).String() + " : " + GetData)
 }

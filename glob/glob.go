@@ -11,17 +11,18 @@ var (
 	LogDesc *os.File
 	LogName string
 
-	GuildList map[uint64]GuildSettings
+	Guilds map[uint64]*GuildData
 )
 
-type roleData struct {
+type RoleData struct {
 	Name string
 	ID   uint64
 }
 
-type GuildSettings struct {
+type GuildData struct {
 	Added    int64
 	Modified int64
-	Premium  int
-	Roles    []roleData
+	Donator  uint8
+	Premium  uint8
+	Roles    []RoleData
 }
