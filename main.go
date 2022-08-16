@@ -4,6 +4,7 @@ import (
 	"RoleKeeper/cfg"
 	"RoleKeeper/command"
 	"RoleKeeper/cons"
+	"RoleKeeper/disc"
 	"RoleKeeper/glob"
 	"RoleKeeper/rclog"
 	"fmt"
@@ -59,7 +60,7 @@ func startbot() {
 
 	bot.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAllWithoutPrivileged)
 
-	bot.AddHandler(BotReady)
+	bot.AddHandler(botReady)
 	errb := bot.Open()
 
 	if errb != nil {
@@ -77,7 +78,8 @@ func startbot() {
 
 }
 
-func BotReady(s *discordgo.Session, r *discordgo.Ready) {
+func botReady(s *discordgo.Session, r *discordgo.Ready) {
+
 	botstatus := "https://" + cfg.Config.Domain
 	err := s.UpdateGameStatus(0, botstatus)
 	if err != nil {
@@ -87,50 +89,34 @@ func BotReady(s *discordgo.Session, r *discordgo.Ready) {
 	s.AddHandler(command.SlashCommand)
 	command.RegisterCommands(s, cfg.Config.App)
 
+	disc.Session = s
+	disc.Ready = r
 	rclog.DoLog("Discord bot ready")
+
+	testDatabase()
+}
+
+func testDatabase() {
 	rclog.DoLog("Making test map...")
 
-	var tSize uint64 = 1000000
+	var tSize uint64 = 10000000
 	var i uint64
-	glob.Guilds = make(map[uint64]*glob.GuildData, tSize)
+	disc.Guilds = make(map[uint64]*disc.GuildData, tSize)
 	tnow := time.Now().Unix()
-	tRoles := []glob.RoleData{}
+	tRoles := []disc.RoleData{}
 	//Make some role data
 	for i = 0; i < 15; i++ {
 		rid := rand.Uint64()
-		tRoles = append(tRoles, glob.RoleData{Name: fmt.Sprintf("%012d", rid), ID: rid})
+		tRoles = append(tRoles, disc.RoleData{Name: disc.IntToID(rid), ID: rid})
 	}
 
-	start := time.Now()
-
 	var rid uint64
-	var idlist []uint64
 	//Test map
 	for i = 0; i < tSize; i++ {
 		rid = rand.Uint64()
-		if glob.Guilds[rid] == nil {
-			newGuild := glob.GuildData{Added: tnow, Modified: tnow, Donator: 0, Premium: 0, Roles: tRoles}
-			glob.Guilds[rid] = &newGuild
-		}
-		if i%100 == 0 {
-			idlist = append(idlist, rid)
+		if disc.Guilds[rid] == nil {
+			newGuild := disc.GuildData{Added: tnow, Modified: tnow, Donator: 0, Premium: 0, Roles: tRoles}
+			disc.Guilds[rid] = &newGuild
 		}
 	}
-
-	end := time.Now()
-
-	rclog.DoLog("Make map took: " + end.Sub(start).String())
-
-	start = time.Now()
-	var GetData uint64
-	for _, i := range idlist {
-		GetData = glob.Guilds[i].Roles[1].ID
-	}
-	end = time.Now()
-
-	if GetData != 0 {
-		//
-	}
-	rclog.DoLog("Lookup took: " + end.Sub(start).String())
-	rclog.DoLog(fmt.Sprintf("Lookups: %v", len(idlist)))
 }
