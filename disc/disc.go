@@ -26,6 +26,7 @@ type GuildData struct {
 }
 
 func IntToID(id uint64) string {
-	strId := fmt.Sprintf("%017d", id)
+	strId := fmt.Sprintf("%v", id)
 	return strId
 }
+

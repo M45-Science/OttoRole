@@ -1,7 +1,7 @@
 package cons
 
 const (
-	DBName             = "dbdata.json"
+	DBName             = "guilddb.json"
 	ConfigFile         = "config.json"
 	MaxDiscordAttempts = 100
 )

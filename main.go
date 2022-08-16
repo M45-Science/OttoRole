@@ -94,12 +94,13 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 	rclog.DoLog("Discord bot ready")
 
 	testDatabase()
+	disc.DumpGuilds()
 }
 
 func testDatabase() {
 	rclog.DoLog("Making test map...")
 
-	var tSize uint64 = 10000000
+	var tSize uint64 = 1000000
 	var i uint64
 	disc.Guilds = make(map[uint64]*disc.GuildData, tSize)
 	tnow := time.Now().Unix()
