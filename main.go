@@ -100,22 +100,25 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 func testDatabase() {
 	rclog.DoLog("Making test map...")
 
-	var tSize uint64 = 1000000
+	var tSize uint64 = 100000
 	var i uint64
 	disc.Guilds = make(map[uint64]*disc.GuildData, tSize)
 	tnow := time.Now().Unix()
-	tRoles := []disc.RoleData{}
-	//Make some role data
-	for i = 0; i < 15; i++ {
-		rid := rand.Uint64()
-		tRoles = append(tRoles, disc.RoleData{Name: disc.IntToID(rid), ID: rid})
-	}
-
 	var rid uint64
+
 	//Test map
 	for i = 0; i < tSize; i++ {
 		rid = rand.Uint64()
 		if disc.Guilds[rid] == nil {
+
+			tRoles := []disc.RoleData{}
+
+			//Make some role data
+			for i = 0; i < 15; i++ {
+				rid := rand.Uint64()
+				tRoles = append(tRoles, disc.RoleData{Name: disc.IntToID(rid), ID: rid})
+			}
+
 			newGuild := disc.GuildData{Added: tnow, Modified: tnow, Donator: 0, Premium: 0, Roles: tRoles}
 			disc.Guilds[rid] = &newGuild
 		}
