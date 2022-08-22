@@ -94,33 +94,40 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 	rclog.DoLog("Discord bot ready")
 
 	testDatabase()
-	disc.DumpGuilds()
 }
 
 func testDatabase() {
 	rclog.DoLog("Making test map...")
 
-	var tSize uint64 = 100000
-	var i uint64
-	disc.Guilds = make(map[uint64]*disc.GuildData, tSize)
+	var tSize uint64 = 1000000
+	var x uint64
+	var y uint64
+	disc.GuildLookup = make(map[uint64]*disc.GuildData, tSize)
 	tnow := time.Now().Unix()
 	var rid uint64
 
 	//Test map
-	for i = 0; i < tSize; i++ {
+	for x = 0; x < tSize; x++ {
 		rid = rand.Uint64()
-		if disc.Guilds[rid] == nil {
+		if disc.GuildLookup[rid] == nil {
 
 			tRoles := []disc.RoleData{}
 
 			//Make some role data
-			for i = 0; i < 15; i++ {
+			for y = 0; y < 15; y++ {
 				rid := rand.Uint64()
-				tRoles = append(tRoles, disc.RoleData{Name: disc.IntToID(rid), ID: rid})
+				tRoles = append(tRoles, disc.RoleData{Name: "role" + disc.IntToID(y), ID: rid})
 			}
 
 			newGuild := disc.GuildData{Added: tnow, Modified: tnow, Donator: 0, Premium: 0, Roles: tRoles}
-			disc.Guilds[rid] = &newGuild
+			disc.GuildLookup[rid] = &newGuild
+
+			if x%cons.ClusterSize == 0 {
+				buf := fmt.Sprintf("TOP: %v CLUSTER: %v", disc.ClusterTop, disc.ClusterTop/cons.ClusterSize)
+				rclog.DoLog(buf)
+			}
+			disc.Clusters[disc.ClusterTop/cons.ClusterSize].Guilds[disc.ClusterTop%cons.ClusterSize] = &newGuild
+			disc.ClusterTop++
 		}
 	}
 }
