@@ -1,9 +1,13 @@
 package disc
 
 import (
+	"RoleKeeper/cons"
+	"RoleKeeper/rclog"
 	"bytes"
 	"compress/zlib"
+	"encoding/json"
 	"log"
+	"os"
 	"sync"
 )
 
@@ -21,4 +25,53 @@ func compressZip(data []byte) []byte {
 	w.Write(data)
 	w.Close()
 	return b.Bytes()
+}
+
+func DumpGuilds() {
+	DBWriteLock.Lock()
+	defer DBWriteLock.Unlock()
+
+	fo, err := os.Create(cons.DBName)
+	if err != nil {
+		rclog.DoLog("Couldn't open db file, skipping...")
+		return
+	}
+	/*  close fo on exit and check for its returned error */
+	defer func() {
+		if err := fo.Close(); err != nil {
+			panic(err)
+		}
+	}()
+
+	DBLock.RLock()
+
+	rclog.DoLog("DumpGuilds: Writing guilds...")
+
+	outbuf := new(bytes.Buffer)
+	enc := json.NewEncoder(outbuf)
+	if err := enc.Encode(GuildLookup); err != nil {
+		rclog.DoLog("DumpGuilds: enc.Encode failure")
+		return
+	}
+	DBLock.RUnlock()
+
+	nfilename := cons.DBName + ".tmp"
+	//compBuf := compressZip(outbuf.Bytes())
+	err = os.WriteFile(nfilename, outbuf.Bytes(), 0644)
+
+	if err != nil {
+		rclog.DoLog("DumpGuilds: Couldn't write db temp file.")
+		return
+	}
+
+	oldName := nfilename
+	newName := cons.DBName
+	err = os.Rename(oldName, newName)
+
+	if err != nil {
+		rclog.DoLog("DumpGuilds: Couldn't rename db temp file.")
+		return
+	}
+
+	rclog.DoLog("DumpGuilds: Complete!")
 }

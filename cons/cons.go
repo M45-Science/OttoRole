@@ -4,6 +4,6 @@ const (
 	DBName             = "guilddb.json"
 	ConfigFile         = "config.json"
 	MaxDiscordAttempts = 50
-	ClusterSize        = 10000
-	MaxClusters        = 10000
+	ClusterSize        = 100000
+	MaxClusters        = 1000
 )

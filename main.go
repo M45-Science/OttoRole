@@ -93,13 +93,15 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 	disc.Ready = r
 	rclog.DoLog("Discord bot ready")
 
+	//time.Sleep(5 * time.Second)
 	testDatabase()
+	//disc.DumpGuilds()
 }
 
 func testDatabase() {
 	rclog.DoLog("Making test map...")
 
-	var tSize uint64 = 1000000
+	var tSize uint64 = 10000000
 	var x uint64
 	var y uint64
 	disc.GuildLookup = make(map[uint64]*disc.GuildData, tSize)
@@ -123,11 +125,21 @@ func testDatabase() {
 			disc.GuildLookup[rid] = &newGuild
 
 			if x%cons.ClusterSize == 0 {
-				buf := fmt.Sprintf("TOP: %v CLUSTER: %v", disc.ClusterTop, disc.ClusterTop/cons.ClusterSize)
-				rclog.DoLog(buf)
+				if disc.Clusters[disc.ClusterTop/cons.ClusterSize] == nil {
+					disc.Clusters[disc.ClusterTop/cons.ClusterSize] =
+						&disc.ClusterData{}
+					buf := fmt.Sprintf("New Cluster: %v", disc.ClusterTop/cons.ClusterSize)
+					rclog.DoLog(buf)
+				}
 			}
 			disc.Clusters[disc.ClusterTop/cons.ClusterSize].Guilds[disc.ClusterTop%cons.ClusterSize] = &newGuild
 			disc.ClusterTop++
 		}
 	}
+	buf := fmt.Sprintf("KGuilds: %v, Clusters: %v, ClusterSize: %v, Max-MGuilds: %0.2f",
+		disc.ClusterTop/1000,
+		(disc.ClusterTop / cons.ClusterSize),
+		cons.ClusterSize,
+		cons.ClusterSize*cons.MaxClusters/1000000.0)
+	rclog.DoLog(buf)
 }

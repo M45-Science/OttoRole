@@ -11,14 +11,12 @@ var (
 	GuildLookup map[uint64]*GuildData
 	Session     *discordgo.Session
 	Ready       *discordgo.Ready
-	Clusters    [cons.MaxClusters]ClusterData
+	Clusters    [cons.MaxClusters]*ClusterData
 	ClusterTop  int
 )
 
 type ClusterData struct {
-	ID     int
 	Guilds [cons.ClusterSize]*GuildData
-	Size   int
 }
 
 type RoleData struct {
@@ -27,6 +25,7 @@ type RoleData struct {
 }
 
 type GuildData struct {
+	Customer uint64
 	Added    int64
 	Modified int64
 	Donator  uint8
