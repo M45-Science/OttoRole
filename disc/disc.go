@@ -3,6 +3,7 @@ package disc
 import (
 	"RoleKeeper/cons"
 	"fmt"
+	"sync"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -17,6 +18,7 @@ var (
 
 type ClusterData struct {
 	Guilds [cons.ClusterSize]*GuildData
+	Lock   sync.RWMutex
 }
 
 type RoleData struct {
@@ -25,9 +27,10 @@ type RoleData struct {
 }
 
 type GuildData struct {
+	LID      uint32
 	Customer uint64
-	Added    int64
-	Modified int64
+	Added    uint64
+	Modified uint64
 	Donator  uint8
 	Premium  uint8
 	Roles    []RoleData

@@ -50,6 +50,6 @@ func StartLog() {
 		return
 	}
 
-	/* Save descriptors, open/closed elsewhere */
+	/* Save descriptors, used/closed elsewhere */
 	glob.LogDesc = bdesc
 }

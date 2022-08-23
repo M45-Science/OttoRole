@@ -5,7 +5,9 @@ import (
 	"RoleKeeper/rclog"
 	"bytes"
 	"compress/zlib"
+	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -25,6 +27,45 @@ func compressZip(data []byte) []byte {
 	w.Write(data)
 	w.Close()
 	return b.Bytes()
+}
+
+func WriteAllCluster() {
+
+	for i, c := range Clusters {
+		if c == nil {
+			os.Exit(1)
+			return
+		}
+		WriteCluster(i)
+	}
+	os.Exit(1)
+}
+
+func WriteCluster(i int) {
+	cluster := Clusters[i]
+
+	if cluster == nil {
+		return
+	}
+
+	cluster.Lock.RLock()
+
+	for _, g := range cluster.Guilds {
+
+		if g == nil {
+			return
+		}
+		buf := new(bytes.Buffer)
+		binary.Write(buf, binary.LittleEndian, g.LID)
+		binary.Write(buf, binary.LittleEndian, g.Customer)
+		binary.Write(buf, binary.LittleEndian, g.Added)
+		binary.Write(buf, binary.LittleEndian, g.Modified)
+		binary.Write(buf, binary.LittleEndian, g.Donator)
+		binary.Write(buf, binary.LittleEndian, g.Premium)
+		fmt.Print(buf)
+	}
+
+	defer cluster.Lock.RUnlock()
 }
 
 func DumpGuilds() {
