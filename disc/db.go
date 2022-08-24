@@ -60,7 +60,7 @@ func WriteCluster(i int) {
 
 	var buf [(RecordSize * (cons.ClusterSize)) + 2]byte
 	var b int64
-	binary.LittleEndian.PutUint16(buf[b:], 1) //version number
+	binary.BigEndian.PutUint16(buf[b:], 1) //version number
 	b += 2
 
 	for gi, g := range Clusters[i].Guilds {
@@ -69,24 +69,24 @@ func WriteCluster(i int) {
 			break
 		}
 		Clusters[i].Guilds[gi].Lock.RLock()
-		binary.LittleEndian.PutUint32(buf[b:], g.LID)
+		binary.BigEndian.PutUint32(buf[b:], g.LID)
 		b += 4
-		binary.LittleEndian.PutUint64(buf[b:], g.Customer)
+		binary.BigEndian.PutUint64(buf[b:], g.Customer)
 		b += 8
-		binary.LittleEndian.PutUint64(buf[b:], g.Guild)
+		binary.BigEndian.PutUint64(buf[b:], g.Guild)
 		b += 8
-		binary.LittleEndian.PutUint64(buf[b:], g.Added)
+		binary.BigEndian.PutUint64(buf[b:], g.Added)
 		b += 8
-		binary.LittleEndian.PutUint64(buf[b:], g.Modified)
+		binary.BigEndian.PutUint64(buf[b:], g.Modified)
 		b += 8
-		binary.LittleEndian.PutUint64(buf[b:], g.ReservedA)
+		binary.BigEndian.PutUint64(buf[b:], g.ReservedA)
 		b += 8
 
-		binary.LittleEndian.PutUint16(buf[b:], g.Donator)
+		binary.BigEndian.PutUint16(buf[b:], g.Donator)
 		b += 2
-		binary.LittleEndian.PutUint16(buf[b:], g.Premium)
+		binary.BigEndian.PutUint16(buf[b:], g.Premium)
 		b += 2
-		binary.LittleEndian.PutUint16(buf[b:], g.ReservedB)
+		binary.BigEndian.PutUint16(buf[b:], g.ReservedB)
 		b += 2
 
 		//End Of Record
@@ -146,7 +146,7 @@ func ReadCluster(i int64) {
 		//rclog.DoLog("New cluster: " + strconv.FormatInt(i+1, 10))
 	}
 
-	version := binary.LittleEndian.Uint16(data[b:])
+	version := binary.BigEndian.Uint16(data[b:])
 	b += 2
 	if version == 1 {
 		for b < dataLen {
@@ -159,30 +159,30 @@ func ReadCluster(i int64) {
 				g = &GuildData{}
 			}
 
-			g.LID = binary.LittleEndian.Uint32(data[b:])
+			g.LID = binary.BigEndian.Uint32(data[b:])
 			b += 4
-			g.Customer = binary.LittleEndian.Uint64(data[b:])
+			g.Customer = binary.BigEndian.Uint64(data[b:])
 			b += 8
-			g.Guild = binary.LittleEndian.Uint64(data[b:])
+			g.Guild = binary.BigEndian.Uint64(data[b:])
 			b += 8
-			g.Added = binary.LittleEndian.Uint64(data[b:])
+			g.Added = binary.BigEndian.Uint64(data[b:])
 			b += 8
-			g.Modified = binary.LittleEndian.Uint64(data[b:])
+			g.Modified = binary.BigEndian.Uint64(data[b:])
 			b += 8
-			g.ReservedA = binary.LittleEndian.Uint64(data[b:])
+			g.ReservedA = binary.BigEndian.Uint64(data[b:])
 			b += 8
 
-			g.Donator = binary.LittleEndian.Uint16(data[b:])
+			g.Donator = binary.BigEndian.Uint16(data[b:])
 			b += 2
-			g.Premium = binary.LittleEndian.Uint16(data[b:])
+			g.Premium = binary.BigEndian.Uint16(data[b:])
 			b += 2
-			g.ReservedB = binary.LittleEndian.Uint16(data[b:])
-			b += 2
-
-			EoR := binary.LittleEndian.Uint16(data[b:])
+			g.ReservedB = binary.BigEndian.Uint16(data[b:])
 			b += 2
 
-			if EoR != 7310 {
+			EoR := binary.BigEndian.Uint16(data[b:])
+			b += 2
+
+			if EoR != (cons.RecEndA*100)+cons.RecEndB {
 				rclog.DoLog("Invalid record!")
 				return
 			}
