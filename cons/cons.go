@@ -6,8 +6,8 @@ const (
 	ClusterSuffix      = ".ccf"
 	ConfigFile         = "config.json"
 	MaxDiscordAttempts = 50
-	ClusterSize        = 100
-	MaxClusters        = 100
+	ClusterSize        = 1000000
+	MaxClusters        = 1000
 
 	//Test only
 	TSize = 2000
