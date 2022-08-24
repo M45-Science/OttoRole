@@ -38,32 +38,30 @@ func WriteAllCluster() {
 		}
 		WriteCluster(i)
 	}
+	rclog.DoLog("DB Write Complete.")
 	os.Exit(1)
 }
 
 func WriteCluster(i int) {
 	cluster := Clusters[i]
 
-	if cluster == nil {
-		return
-	}
-
 	cluster.Lock.RLock()
 
+	buf := new(bytes.Buffer)
 	for _, g := range cluster.Guilds {
 
 		if g == nil {
-			return
+			break
 		}
-		buf := new(bytes.Buffer)
 		binary.Write(buf, binary.LittleEndian, g.LID)
 		binary.Write(buf, binary.LittleEndian, g.Customer)
 		binary.Write(buf, binary.LittleEndian, g.Added)
 		binary.Write(buf, binary.LittleEndian, g.Modified)
 		binary.Write(buf, binary.LittleEndian, g.Donator)
 		binary.Write(buf, binary.LittleEndian, g.Premium)
-		fmt.Print(buf)
 	}
+	name := fmt.Sprintf("db/cluster-%v.dat", i+1)
+	os.WriteFile(name, buf.Bytes(), 0644)
 
 	defer cluster.Lock.RUnlock()
 }
