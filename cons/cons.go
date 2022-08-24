@@ -8,4 +8,7 @@ const (
 	MaxDiscordAttempts = 50
 	ClusterSize        = 100000
 	MaxClusters        = 1000
+
+	//Test only
+	TSize = 100000000
 )

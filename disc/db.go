@@ -96,6 +96,24 @@ func WriteCluster(i int) {
 	rclog.DoLog("Cluster-" + strconv.FormatInt(int64(i+1), 10) + " write, took: " + endTime.Sub(startTime).String() + ", Wrote: " + strconv.FormatInt(b, 10) + "b")
 }
 
+func ReadAllClusters() {
+
+	wg := sizedwaitgroup.New(ThreadCount)
+
+	startTime := time.Now()
+	for x := 0; x < cons.TSize/cons.ClusterSize && x < cons.MaxClusters; x++ {
+		wg.Add()
+		go func(x int) {
+			ReadCluster(int64(x))
+			wg.Done()
+		}(x)
+	}
+	wg.Wait()
+	endTime := time.Now()
+
+	rclog.DoLog("Read all clusters, took: " + endTime.Sub(startTime).String())
+}
+
 func ReadCluster(i int64) {
 	startTime := time.Now()
 

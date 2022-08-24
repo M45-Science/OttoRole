@@ -15,6 +15,7 @@ import (
 	"os/signal"
 	"runtime"
 	"runtime/debug"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -101,20 +102,21 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 	disc.Ready = r
 	rclog.DoLog("Discord bot ready")
 
-	disc.GuildLookup = make(map[uint64]*disc.GuildData, tSize)
-	//time.Sleep(5 * time.Second)
-	//testDatabase()
-	//disc.DumpGuilds()
-	//time.Sleep(10 * time.Second)
-	for x := 0; x < tSize/cons.ClusterSize && x < cons.MaxClusters; x++ {
-		disc.ReadCluster(int64(x))
+	disc.GuildLookup = make(map[uint64]*disc.GuildData, cons.TSize)
+
+	rclog.DoLog("Record Size: " + strconv.FormatInt(disc.RecordSize, 10) + "b")
+	rclog.DoLog("Cluster Size: " + strconv.FormatInt(disc.RecordSize*cons.ClusterSize+2, 10) + "b")
+
+	if 1 == 2 {
+		testDatabase()
+		disc.WriteAllCluster()
+		disc.ReadAllClusters()
+	} else {
+		disc.ReadAllClusters()
+		disc.WriteAllCluster()
 	}
-	//disc.WriteAllCluster()
-	//disc.UpdateGuildLookup()
 	disc.UpdateGuildLookup()
 }
-
-var tSize int = 10000000
 
 func testDatabase() {
 	os.RemoveAll("db")
@@ -125,7 +127,7 @@ func testDatabase() {
 	var y int
 
 	//Test map
-	for x = 0; x < int(math.Ceil(float64(tSize)/float64(cons.ClusterSize))); x++ {
+	for x = 0; x < int(math.Ceil(float64(cons.TSize)/float64(cons.ClusterSize))); x++ {
 
 		disc.Clusters[x] =
 			&disc.ClusterData{}
@@ -146,7 +148,7 @@ func testDatabase() {
 
 			disc.Clusters[x].Guilds[y] = &newGuild
 			disc.ClusterTop++
-			if disc.ClusterTop > tSize {
+			if disc.ClusterTop > cons.TSize {
 				break
 			}
 		}
@@ -154,7 +156,7 @@ func testDatabase() {
 
 	buf := fmt.Sprintf("Guilds: %v, Clusters: %v, ClusterSize: %v, Max-MGuilds: %0.2f",
 		disc.ClusterTop,
-		int(math.Ceil(float64(tSize)/float64(cons.ClusterSize))),
+		int(math.Ceil(float64(cons.TSize)/float64(cons.ClusterSize))),
 		cons.ClusterSize,
 		cons.ClusterSize*cons.MaxClusters/1000000.0)
 	rclog.DoLog(buf)
