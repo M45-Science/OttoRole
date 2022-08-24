@@ -54,6 +54,9 @@ func startbot() {
 	}
 
 	rclog.DoLog("RoleKeeper " + version + " starting.")
+	rclog.DoLog("Max Guilds: " + strconv.FormatInt((cons.MaxClusters*cons.ClusterSize), 10))
+	time.Sleep(3)
+
 	bot, err := discordgo.New("Bot " + cfg.Config.Token)
 
 	if err != nil {
@@ -131,8 +134,8 @@ func testDatabase() {
 
 		disc.Clusters[x] =
 			&disc.ClusterData{}
-		buf := fmt.Sprintf("New Cluster: %v", (x)+1)
-		rclog.DoLog(buf)
+		//buf := fmt.Sprintf("New Cluster: %v", (x)+1)
+		//rclog.DoLog(buf)
 
 		tnow := time.Now().Unix()
 		for y = 0; y < cons.ClusterSize; y++ {

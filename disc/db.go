@@ -131,7 +131,7 @@ func ReadCluster(i int64) {
 	if Clusters[i] == nil {
 		c := ClusterData{}
 		Clusters[i] = &c
-		rclog.DoLog("New cluster: " + strconv.FormatInt(i+1, 10))
+		//rclog.DoLog("New cluster: " + strconv.FormatInt(i+1, 10))
 	}
 
 	version := binary.BigEndian.Uint16(data[b:])
@@ -194,6 +194,7 @@ func UpdateGuildLookup() {
 		}
 	}
 
+	//debug.FreeOSMemory()
 	endTime := time.Now()
 	rclog.DoLog("Guild lookup map update, took: " + endTime.Sub(startTime).String())
 }
