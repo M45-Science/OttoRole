@@ -8,9 +8,13 @@ import (
 	"RoleKeeper/glob"
 	"RoleKeeper/rclog"
 	"fmt"
+	"io/fs"
+	"math"
 	"math/rand"
 	"os"
 	"os/signal"
+	"runtime"
+	"runtime/debug"
 	"syscall"
 	"time"
 
@@ -20,6 +24,10 @@ import (
 const version = "0.0.1"
 
 func main() {
+
+	disc.ThreadCount = runtime.NumCPU()
+	debug.SetMemoryLimit(1024 * 1024 * 1024 * 24)
+	debug.SetMaxThreads(disc.ThreadCount * 4)
 
 	glob.Uptime = time.Now().UTC().Round(time.Second)
 	rclog.StartLog()
@@ -96,50 +104,53 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 	//time.Sleep(5 * time.Second)
 	testDatabase()
 	//disc.DumpGuilds()
+	//time.Sleep(10 * time.Second)
 	disc.WriteAllCluster()
+	disc.UpdateGuildLookup()
+	disc.UpdateGuildLookup()
 }
 
 func testDatabase() {
+	os.RemoveAll("db")
+	os.Mkdir("db", fs.ModePerm)
 	rclog.DoLog("Making test map...")
 
-	var tSize uint64 = 100000000
-	var x uint64
-	//var y uint64
+	var tSize int = 100000000
+	var x int
+	var y int
 	disc.GuildLookup = make(map[uint64]*disc.GuildData, tSize)
-	tnow := time.Now().Unix()
-	var rid uint64
 
 	//Test map
-	for x = 0; x < tSize; x++ {
-		rid = rand.Uint64()
-		if disc.GuildLookup[rid] == nil {
+	for x = 0; x < int(math.Ceil(float64(tSize)/float64(cons.ClusterSize))); x++ {
 
-			tRoles := []disc.RoleData{}
+		disc.Clusters[x] =
+			&disc.ClusterData{}
+		buf := fmt.Sprintf("New Cluster: %v", (x)+1)
+		rclog.DoLog(buf)
 
-			//Make some role data
-			/* for y = 1; y <= 5; y++ {
-				rid := rand.Uint64()
-				tRoles = append(tRoles, disc.RoleData{Name: "role" + disc.IntToID(y), ID: rid})
-			} */
-
-			newGuild := disc.GuildData{LID: uint32(x), Customer: rand.Uint64(), Added: uint64(tnow), Modified: uint64(tnow), Donator: 0, Premium: 0, Roles: tRoles}
-			disc.GuildLookup[rid] = &newGuild
-
-			if x%cons.ClusterSize == 0 {
-				if disc.Clusters[disc.ClusterTop/cons.ClusterSize] == nil {
-					disc.Clusters[disc.ClusterTop/cons.ClusterSize] =
-						&disc.ClusterData{}
-					buf := fmt.Sprintf("New Cluster: %v", (disc.ClusterTop/cons.ClusterSize)+1)
-					rclog.DoLog(buf)
+		tnow := time.Now().Unix()
+		for y = 0; y < cons.ClusterSize; y++ {
+			/*
+				tRoles := []disc.RoleData{}
+				for y = 1; y <= 5; y++ {
+					rid := rand.Uint64()
+					tRoles = append(tRoles, disc.RoleData{Name: "role" + disc.IntToID(y), ID: rid})
 				}
-			}
-			disc.Clusters[disc.ClusterTop/cons.ClusterSize].Guilds[disc.ClusterTop%cons.ClusterSize] = &newGuild
+			*/
+
+			newGuild := disc.GuildData{LID: uint32((x * cons.ClusterSize) + y), Customer: rand.Uint64(), Guild: rand.Uint64(), Added: uint64(tnow), Modified: uint64(tnow), Donator: 0, Premium: 0}
+
+			disc.Clusters[x].Guilds[y] = &newGuild
 			disc.ClusterTop++
+			if disc.ClusterTop > tSize {
+				break
+			}
 		}
 	}
-	buf := fmt.Sprintf("KGuilds: %v, Clusters: %v, ClusterSize: %v, Max-MGuilds: %0.2f",
-		disc.ClusterTop/1000,
-		(disc.ClusterTop / cons.ClusterSize),
+
+	buf := fmt.Sprintf("Guilds: %v, Clusters: %v, ClusterSize: %v, Max-MGuilds: %0.2f",
+		disc.ClusterTop,
+		int(math.Ceil(float64(tSize)/float64(cons.ClusterSize))),
 		cons.ClusterSize,
 		cons.ClusterSize*cons.MaxClusters/1000000.0)
 	rclog.DoLog(buf)

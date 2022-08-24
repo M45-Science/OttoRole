@@ -9,17 +9,18 @@ import (
 )
 
 var (
-	GuildLookupLock sync.RWMutex
+	ThreadCount     int
 	GuildLookup     map[uint64]*GuildData
-	Session         *discordgo.Session
-	Ready           *discordgo.Ready
-	Clusters        [cons.MaxClusters]*ClusterData
-	ClusterTop      int
+	GuildLookupLock sync.RWMutex
+
+	Session    *discordgo.Session
+	Ready      *discordgo.Ready
+	Clusters   [cons.MaxClusters]*ClusterData
+	ClusterTop int
 )
 
 type ClusterData struct {
 	Guilds [cons.ClusterSize]*GuildData
-	Lock   sync.RWMutex
 }
 
 type RoleData struct {
@@ -30,11 +31,13 @@ type RoleData struct {
 type GuildData struct {
 	LID      uint32
 	Customer uint64
+	Guild    uint64
 	Added    uint64
 	Modified uint64
 	Donator  uint8
 	Premium  uint8
 	Roles    []RoleData
+	Lock     sync.RWMutex
 }
 
 func IntToID(id uint64) string {
