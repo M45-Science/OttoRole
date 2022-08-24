@@ -2,3 +2,4 @@ config.json
 RoleKeeper
 log/*
 guilddb.json
+*.dat

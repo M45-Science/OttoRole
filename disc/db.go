@@ -10,7 +10,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"sync"
+	"time"
 )
 
 var (
@@ -31,6 +33,8 @@ func compressZip(data []byte) []byte {
 
 func WriteAllCluster() {
 
+	startTime := time.Now()
+	
 	for i, c := range Clusters {
 		if c == nil {
 			os.Exit(1)
@@ -38,11 +42,14 @@ func WriteAllCluster() {
 		}
 		WriteCluster(i)
 	}
-	rclog.DoLog("DB Write Complete.")
+	endTime := time.Now()
+	rclog.DoLog("DB Write Complete, took: " + endTime.Sub(startTime).String())
 	os.Exit(1)
 }
 
 func WriteCluster(i int) {
+	startTime := time.Now()
+
 	cluster := Clusters[i]
 
 	cluster.Lock.RLock()
@@ -64,6 +71,8 @@ func WriteCluster(i int) {
 	os.WriteFile(name, buf.Bytes(), 0644)
 
 	defer cluster.Lock.RUnlock()
+	endTime := time.Now()
+	rclog.DoLog("Cluster-" + strconv.FormatInt(int64(i), 10) + " write, took: " + endTime.Sub(startTime).String())
 }
 
 func DumpGuilds() {

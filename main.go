@@ -129,7 +129,7 @@ func testDatabase() {
 				if disc.Clusters[disc.ClusterTop/cons.ClusterSize] == nil {
 					disc.Clusters[disc.ClusterTop/cons.ClusterSize] =
 						&disc.ClusterData{}
-					buf := fmt.Sprintf("New Cluster: %v", disc.ClusterTop/cons.ClusterSize)
+					buf := fmt.Sprintf("New Cluster: %v", (disc.ClusterTop/cons.ClusterSize)+1)
 					rclog.DoLog(buf)
 				}
 			}
