@@ -101,24 +101,28 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 	disc.Ready = r
 	rclog.DoLog("Discord bot ready")
 
+	disc.GuildLookup = make(map[uint64]*disc.GuildData, tSize)
 	//time.Sleep(5 * time.Second)
-	testDatabase()
+	//testDatabase()
 	//disc.DumpGuilds()
 	//time.Sleep(10 * time.Second)
-	disc.WriteAllCluster()
-	disc.UpdateGuildLookup()
+	for x := 0; x < tSize/cons.ClusterSize && x < cons.MaxClusters; x++ {
+		disc.ReadCluster(int64(x))
+	}
+	//disc.WriteAllCluster()
+	//disc.UpdateGuildLookup()
 	disc.UpdateGuildLookup()
 }
+
+var tSize int = 10000000
 
 func testDatabase() {
 	os.RemoveAll("db")
 	os.Mkdir("db", fs.ModePerm)
 	rclog.DoLog("Making test map...")
 
-	var tSize int = 100000000
 	var x int
 	var y int
-	disc.GuildLookup = make(map[uint64]*disc.GuildData, tSize)
 
 	//Test map
 	for x = 0; x < int(math.Ceil(float64(tSize)/float64(cons.ClusterSize))); x++ {

@@ -29,16 +29,20 @@ type RoleData struct {
 }
 
 type GuildData struct {
-	LID      uint32
-	Customer uint64
-	Guild    uint64
-	Added    uint64
-	Modified uint64
-	Donator  uint8
-	Premium  uint8
+	//Name type bytes
+	LID      uint32 //4
+	Customer uint64 //8
+	Guild    uint64 //8
+	Added    uint64 //8
+	Modified uint64 //8
+	Donator  uint8  //2 (written as uint16)
+	Premium  uint8  //2 (written as uint16)
 	Roles    []RoleData
 	Lock     sync.RWMutex
 }
+
+// Total size
+const RecordSize = 40
 
 func IntToID(id uint64) string {
 	strId := fmt.Sprintf("%v", id)

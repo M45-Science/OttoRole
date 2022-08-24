@@ -58,7 +58,7 @@ func WriteAllCluster() {
 func WriteCluster(i int) {
 	startTime := time.Now()
 
-	var buf [(40 * (cons.ClusterSize)) + 2]byte
+	var buf [(RecordSize * (cons.ClusterSize)) + 2]byte
 	var b int64
 	binary.BigEndian.PutUint16(buf[b:], 1) //version number
 	b += 2
@@ -94,6 +94,66 @@ func WriteCluster(i int) {
 
 	endTime := time.Now()
 	rclog.DoLog("Cluster-" + strconv.FormatInt(int64(i+1), 10) + " write, took: " + endTime.Sub(startTime).String() + ", Wrote: " + strconv.FormatInt(b, 10) + "b")
+}
+
+func ReadCluster(i int64) {
+	startTime := time.Now()
+
+	name := fmt.Sprintf("db/cluster-%v.dat", i+1)
+	data, err := os.ReadFile(name)
+	if err != nil {
+		rclog.DoLog(err.Error())
+		return
+	}
+
+	dataLen := int64(len(data))
+	var b int64
+	var gi int64
+
+	if Clusters[i] == nil {
+		c := ClusterData{}
+		Clusters[i] = &c
+		rclog.DoLog("New cluster: " + strconv.FormatInt(i+1, 10))
+	}
+
+	version := binary.BigEndian.Uint16(data[b:])
+	b += 2
+	if version == 1 {
+		for b < dataLen {
+			if (dataLen-b)-RecordSize < 0 {
+				rclog.DoLog("Invalid cluster data, stopping.")
+				break
+			}
+			var g *GuildData = Clusters[i].Guilds[gi]
+			if g == nil {
+				g = &GuildData{}
+			}
+
+			g.LID = binary.LittleEndian.Uint32(data[b:])
+			b += 4
+			g.Customer = binary.LittleEndian.Uint64(data[b:])
+			b += 8
+			g.Guild = binary.LittleEndian.Uint64(data[b:])
+			b += 8
+			g.Added = binary.LittleEndian.Uint64(data[b:])
+			b += 8
+			g.Modified = binary.LittleEndian.Uint64(data[b:])
+			b += 8
+			g.Donator = uint8(binary.LittleEndian.Uint16(data[b:]))
+			b += 2
+			g.Premium = uint8(binary.LittleEndian.Uint16(data[b:]))
+			b += 2
+
+			Clusters[i].Guilds[gi] = g
+			gi++
+		}
+	} else {
+		rclog.DoLog("Invalid cluster version.")
+		return
+	}
+
+	endTime := time.Now()
+	rclog.DoLog("Cluster-" + strconv.FormatInt(int64(i+1), 10) + " read, took: " + endTime.Sub(startTime).String() + ", Read: " + strconv.FormatInt(b, 10) + "b")
 }
 
 func UpdateGuildLookup() {
