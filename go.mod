@@ -2,7 +2,10 @@ module RoleKeeper
 
 go 1.18
 
-require github.com/bwmarrin/discordgo v0.25.0
+require (
+	github.com/bwmarrin/discordgo v0.25.0
+	github.com/remeh/sizedwaitgroup v1.0.0
+)
 
 require (
 	github.com/gorilla/websocket v1.4.2 // indirect

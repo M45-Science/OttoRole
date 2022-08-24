@@ -10,9 +10,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/remeh/sizedwaitgroup"
 )
 
 var (
@@ -34,14 +37,22 @@ func compressZip(data []byte) []byte {
 func WriteAllCluster() {
 
 	startTime := time.Now()
-	
+
+	threads := runtime.NumCPU()
+	wg := sizedwaitgroup.New(threads)
+
 	for i, c := range Clusters {
 		if c == nil {
 			os.Exit(1)
 			return
 		}
-		WriteCluster(i)
+		wg.Add()
+		go func(i int) {
+			WriteCluster(i)
+			wg.Done()
+		}(i)
 	}
+	wg.Wait()
 	endTime := time.Now()
 	rclog.DoLog("DB Write Complete, took: " + endTime.Sub(startTime).String())
 	os.Exit(1)

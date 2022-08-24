@@ -9,11 +9,12 @@ import (
 )
 
 var (
-	GuildLookup map[uint64]*GuildData
-	Session     *discordgo.Session
-	Ready       *discordgo.Ready
-	Clusters    [cons.MaxClusters]*ClusterData
-	ClusterTop  int
+	GuildLookupLock sync.RWMutex
+	GuildLookup     map[uint64]*GuildData
+	Session         *discordgo.Session
+	Ready           *discordgo.Ready
+	Clusters        [cons.MaxClusters]*ClusterData
+	ClusterTop      int
 )
 
 type ClusterData struct {
