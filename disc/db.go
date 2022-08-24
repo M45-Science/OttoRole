@@ -60,7 +60,7 @@ func WriteCluster(i int) {
 
 	var buf [(RecordSize * (cons.ClusterSize)) + 2]byte
 	var b int64
-	binary.BigEndian.PutUint16(buf[b:], 1) //version number
+	binary.LittleEndian.PutUint16(buf[b:], 1) //version number
 	b += 2
 
 	for gi, g := range Clusters[i].Guilds {
@@ -79,10 +79,22 @@ func WriteCluster(i int) {
 		b += 8
 		binary.LittleEndian.PutUint64(buf[b:], g.Modified)
 		b += 8
-		binary.LittleEndian.PutUint16(buf[b:], uint16(g.Donator))
+		binary.LittleEndian.PutUint64(buf[b:], g.ReservedA)
+		b += 8
+
+		binary.LittleEndian.PutUint16(buf[b:], g.Donator)
 		b += 2
-		binary.LittleEndian.PutUint16(buf[b:], uint16(g.Premium))
+		binary.LittleEndian.PutUint16(buf[b:], g.Premium)
 		b += 2
+		binary.LittleEndian.PutUint16(buf[b:], g.ReservedB)
+		b += 2
+
+		//End Of Record
+		buf[b] = byte(cons.RecEndA)
+		b += 1
+		buf[b] = byte(cons.RecEndB)
+		b += 1
+
 		Clusters[i].Guilds[gi].Lock.RUnlock()
 	}
 	name := fmt.Sprintf("db/cluster-%v.dat", i+1)
@@ -134,7 +146,7 @@ func ReadCluster(i int64) {
 		//rclog.DoLog("New cluster: " + strconv.FormatInt(i+1, 10))
 	}
 
-	version := binary.BigEndian.Uint16(data[b:])
+	version := binary.LittleEndian.Uint16(data[b:])
 	b += 2
 	if version == 1 {
 		for b < dataLen {
@@ -157,10 +169,23 @@ func ReadCluster(i int64) {
 			b += 8
 			g.Modified = binary.LittleEndian.Uint64(data[b:])
 			b += 8
-			g.Donator = uint8(binary.LittleEndian.Uint16(data[b:]))
+			g.ReservedA = binary.LittleEndian.Uint64(data[b:])
+			b += 8
+
+			g.Donator = binary.LittleEndian.Uint16(data[b:])
 			b += 2
-			g.Premium = uint8(binary.LittleEndian.Uint16(data[b:]))
+			g.Premium = binary.LittleEndian.Uint16(data[b:])
 			b += 2
+			g.ReservedB = binary.LittleEndian.Uint16(data[b:])
+			b += 2
+
+			EoR := binary.LittleEndian.Uint16(data[b:])
+			b += 2
+
+			if EoR != 7310 {
+				rclog.DoLog("Invalid record!")
+				return
+			}
 
 			Clusters[i].Guilds[gi] = g
 			gi++

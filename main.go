@@ -110,7 +110,7 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 	rclog.DoLog("Record Size: " + strconv.FormatInt(disc.RecordSize, 10) + "b")
 	rclog.DoLog("Cluster Size: " + strconv.FormatInt(disc.RecordSize*cons.ClusterSize+2, 10) + "b")
 
-	if 1 == 2 {
+	if 1 == 1 {
 		testDatabase()
 		disc.WriteAllCluster()
 		disc.ReadAllClusters()
