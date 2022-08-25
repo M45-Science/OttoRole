@@ -10,7 +10,8 @@ const (
 	MaxClusters        = 1000
 	RecEndA            = 59 //;
 	RecEndB            = 10 //NewLine
+	RecDecimal         = 2619
 
 	//Test only
-	TSize = 2000
+	TSize = 10000000
 )
