@@ -45,9 +45,6 @@ type GuildData struct {
 	Lock  sync.RWMutex
 }
 
-// Total size + 2 for end
-const RecordSize = 52
-
 func IntToID(id uint64) string {
 	strId := fmt.Sprintf("%v", id)
 	return strId

@@ -13,5 +13,5 @@ var cmds = []Command{
 }
 
 func RoleCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	
+
 }

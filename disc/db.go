@@ -55,6 +55,9 @@ func WriteAllCluster() {
 
 }
 
+// Size of all fields, sans version header
+const RecordSize = 40
+
 func WriteCluster(i int) {
 	startTime := time.Now()
 
@@ -79,21 +82,11 @@ func WriteCluster(i int) {
 		b += 8
 		binary.LittleEndian.PutUint64(buf[b:], g.Modified)
 		b += 8
-		binary.LittleEndian.PutUint64(buf[b:], g.ReservedA)
-		b += 8
-
 		binary.LittleEndian.PutUint16(buf[b:], g.Donator)
 		b += 2
-		binary.LittleEndian.PutUint16(buf[b:], g.Premium)
-		b += 2
-		binary.LittleEndian.PutUint16(buf[b:], g.ReservedB)
-		b += 2
 
-		//End Of Record
-		buf[b] = byte(cons.RecEndA)
-		b += 1
-		buf[b] = byte(cons.RecEndB)
-		b += 1
+		binary.LittleEndian.PutUint16(buf[b:], cons.RecDecimal)
+		b += 2
 
 		Clusters[i].Guilds[gi].Lock.RUnlock()
 	}
@@ -169,14 +162,7 @@ func ReadCluster(i int64) {
 			b += 8
 			g.Modified = binary.LittleEndian.Uint64(data[b:])
 			b += 8
-			g.ReservedA = binary.LittleEndian.Uint64(data[b:])
-			b += 8
-
 			g.Donator = binary.LittleEndian.Uint16(data[b:])
-			b += 2
-			g.Premium = binary.LittleEndian.Uint16(data[b:])
-			b += 2
-			g.ReservedB = binary.LittleEndian.Uint16(data[b:])
 			b += 2
 
 			EoR := binary.LittleEndian.Uint16(data[b:])

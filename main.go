@@ -54,7 +54,6 @@ func startbot() {
 
 	cwlog.DoLog("RoleKeeper " + version + " starting.")
 	cwlog.DoLog("Max Guilds: " + strconv.FormatInt((cons.MaxClusters*cons.ClusterSize), 10))
-	time.Sleep(3)
 
 	bot, err := discordgo.New("Bot " + cfg.Config.Token)
 
