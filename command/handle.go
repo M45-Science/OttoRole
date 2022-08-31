@@ -4,6 +4,7 @@ import (
 	"RoleKeeper/cfg"
 	"RoleKeeper/cwlog"
 	"RoleKeeper/disc"
+	"RoleKeeper/glob"
 	"fmt"
 	"strings"
 
@@ -33,7 +34,7 @@ func RegisterCommands(s *discordgo.Session, g string) {
 }
 
 func ClearCommands() {
-	if /**glob.DoDeregisterCommands && */ disc.Session != nil {
+	if *glob.DoDeregisterCommands && disc.Session != nil {
 		cmds, _ := disc.Session.ApplicationCommands(cfg.Config.App, "")
 		for _, v := range cmds {
 			cwlog.DoLog(fmt.Sprintf("Deregistered command: %s", v.Name))

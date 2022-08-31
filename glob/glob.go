@@ -10,4 +10,8 @@ var (
 
 	LogDesc *os.File
 	LogName string
+
+	DoRegisterCommands   *bool
+	DoDeregisterCommands *bool
+	LocalTestMode        *bool
 )

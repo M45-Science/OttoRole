@@ -7,6 +7,7 @@ import (
 	"RoleKeeper/cwlog"
 	"RoleKeeper/disc"
 	"RoleKeeper/glob"
+	"flag"
 	"fmt"
 	"math"
 	"math/rand"
@@ -25,6 +26,11 @@ const version = "0.0.1"
 
 func main() {
 
+	glob.DoRegisterCommands = flag.Bool("regCommands", false, "Register discord commands")
+	glob.DoDeregisterCommands = flag.Bool("deregCommands", false, "Deregister discord commands")
+	glob.LocalTestMode = flag.Bool("localTest", false, "Local test mode.")
+	flag.Parse()
+
 	disc.ThreadCount = runtime.NumCPU()
 	debug.SetMemoryLimit(1024 * 1024 * 1024 * 24)
 	debug.SetMaxThreads(disc.ThreadCount * 4)
@@ -42,6 +48,7 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
+	command.ClearCommands()
 }
 
 var DiscordConnectAttempts int
