@@ -56,7 +56,7 @@ func WriteAllCluster() {
 }
 
 // Size of all fields, sans version header
-const RecordSize = 40
+const RecordSize = 38
 
 func WriteCluster(i int) {
 	startTime := time.Now()
@@ -83,9 +83,6 @@ func WriteCluster(i int) {
 		binary.LittleEndian.PutUint64(buf[b:], g.Modified)
 		b += 8
 		binary.LittleEndian.PutUint16(buf[b:], g.Donator)
-		b += 2
-
-		binary.LittleEndian.PutUint16(buf[b:], cons.RecDecimal)
 		b += 2
 
 		Clusters[i].Guilds[gi].Lock.RUnlock()
@@ -164,14 +161,6 @@ func ReadCluster(i int64) {
 			b += 8
 			g.Donator = binary.LittleEndian.Uint16(data[b:])
 			b += 2
-
-			EoR := binary.LittleEndian.Uint16(data[b:])
-			b += 2
-
-			if EoR != cons.RecDecimal {
-				cwlog.DoLog("Invalid record!:" + strconv.FormatInt(int64(EoR), 10))
-				return
-			}
 
 			Clusters[i].Guilds[gi] = g
 			gi++
