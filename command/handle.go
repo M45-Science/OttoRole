@@ -20,7 +20,7 @@ type Command struct {
 
 var CL []Command
 
-func RegisterCommands(s *discordgo.Session, g string) {
+func RegisterCommands(s *discordgo.Session) {
 	CL = cmds
 
 	for i, o := range CL {

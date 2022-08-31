@@ -92,7 +92,6 @@ func startbot() {
 	}
 
 	bot.LogLevel = discordgo.LogWarning
-
 }
 
 func botReady(s *discordgo.Session, r *discordgo.Ready) {
@@ -104,7 +103,7 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 	}
 
 	s.AddHandler(command.SlashCommand)
-	command.RegisterCommands(s, cfg.Config.App)
+	command.RegisterCommands(s)
 
 	disc.Session = s
 	disc.Ready = r
@@ -124,6 +123,10 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 		disc.WriteAllCluster()
 	}
 	disc.UpdateGuildLookup()
+
+	if *glob.DoDeregisterCommands {
+		command.RegisterCommands(s)
+	}
 }
 
 func testDatabase() {
