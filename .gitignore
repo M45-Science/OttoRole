@@ -1,5 +1,5 @@
 config.json
 RoleKeeper
-log/*
+logs/
 guilddb.json
 *.dat
