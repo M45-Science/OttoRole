@@ -97,7 +97,7 @@ func WriteCluster(i int) {
 
 		Clusters[i].Guilds[gi].Lock.RUnlock()
 	}
-	name := fmt.Sprintf("db/cluster-%v.dat", i+1)
+	name := fmt.Sprintf("data/db/cluster-%v.dat", i+1)
 	err := os.WriteFile(name, buf[0:b], 0644)
 	if err != nil && err != fs.ErrNotExist {
 		cwlog.DoLog(err.Error())
@@ -129,7 +129,7 @@ func ReadAllClusters() {
 func ReadCluster(i int64) {
 	startTime := time.Now()
 
-	name := fmt.Sprintf("db/cluster-%v.dat", i+1)
+	name := fmt.Sprintf("data/db/cluster-%v.dat", i+1)
 	data, err := os.ReadFile(name)
 	if err != nil {
 		cwlog.DoLog(err.Error())

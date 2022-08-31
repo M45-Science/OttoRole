@@ -8,7 +8,6 @@ import (
 	"RoleKeeper/disc"
 	"RoleKeeper/glob"
 	"fmt"
-	"io/fs"
 	"math"
 	"math/rand"
 	"os"
@@ -122,8 +121,20 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 }
 
 func testDatabase() {
-	os.RemoveAll("db")
-	os.Mkdir("db", fs.ModePerm)
+	os.RemoveAll("data/db")
+	/* Make data directory */
+	errr := os.MkdirAll("data", os.ModePerm)
+	if errr != nil {
+		fmt.Print(errr.Error())
+		return
+	}
+	/* Make log directory */
+	errr = os.MkdirAll("data/db", os.ModePerm)
+	if errr != nil {
+		fmt.Print(errr.Error())
+		return
+	}
+
 	cwlog.DoLog("Making test map...")
 
 	var x int

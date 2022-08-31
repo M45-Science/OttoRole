@@ -32,10 +32,16 @@ func StartLog() {
 	t := time.Now()
 
 	/* Create our log file names */
-	glob.LogName = fmt.Sprintf("logs/%v-%v-%v.log", t.Day(), t.Month(), t.Year())
+	glob.LogName = fmt.Sprintf("data/logs/%v-%v-%v.log", t.Day(), t.Month(), t.Year())
 
+	/* Make data directory */
+	errr := os.MkdirAll("data", os.ModePerm)
+	if errr != nil {
+		fmt.Print(errr.Error())
+		return
+	}
 	/* Make log directory */
-	errr := os.MkdirAll("logs", os.ModePerm)
+	errr = os.MkdirAll("data/logs", os.ModePerm)
 	if errr != nil {
 		fmt.Print(errr.Error())
 		return
