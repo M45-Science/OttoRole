@@ -2,7 +2,7 @@ package cfg
 
 import (
 	"RoleKeeper/cons"
-	"RoleKeeper/rclog"
+	"RoleKeeper/cwlog"
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
@@ -26,27 +26,27 @@ func WriteCfg() bool {
 	enc.SetIndent("", "\t")
 
 	if err := enc.Encode(Config); err != nil {
-		rclog.DoLog("WriteCfg: enc.Encode failure")
+		cwlog.DoLog("WriteCfg: enc.Encode failure")
 		return false
 	}
 
 	_, err := os.Create(tempPath)
 
 	if err != nil {
-		rclog.DoLog("WriteCfg: os.Create failure")
+		cwlog.DoLog("WriteCfg: os.Create failure")
 		return false
 	}
 
 	err = ioutil.WriteFile(tempPath, outbuf.Bytes(), 0644)
 
 	if err != nil {
-		rclog.DoLog("WriteCfg: WriteFile failure")
+		cwlog.DoLog("WriteCfg: WriteFile failure")
 	}
 
 	err = os.Rename(tempPath, finalPath)
 
 	if err != nil {
-		rclog.DoLog("WriteCfg: Couldn't rename cfg file.")
+		cwlog.DoLog("WriteCfg: Couldn't rename cfg file.")
 		return false
 	}
 
@@ -59,7 +59,7 @@ func ReadCfg() bool {
 	notfound := os.IsNotExist(err)
 
 	if notfound {
-		rclog.DoLog("ReadCfg: os.Stat failed, empty config generated.")
+		cwlog.DoLog("ReadCfg: os.Stat failed, empty config generated.")
 		return true
 	} else { /* Otherwise just read in the config */
 		file, err := ioutil.ReadFile(cons.ConfigFile)
@@ -69,15 +69,15 @@ func ReadCfg() bool {
 
 			err := json.Unmarshal([]byte(file), &newcfg)
 			if err != nil {
-				rclog.DoLog("ReadCfg: Unmarshal failure")
-				rclog.DoLog(err.Error())
+				cwlog.DoLog("ReadCfg: Unmarshal failure")
+				cwlog.DoLog(err.Error())
 				return false
 			}
 
 			Config = newcfg
 			return true
 		} else {
-			rclog.DoLog("ReadCfg: ReadFile failure")
+			cwlog.DoLog("ReadCfg: ReadFile failure")
 			return false
 		}
 	}

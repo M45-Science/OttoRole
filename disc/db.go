@@ -2,7 +2,7 @@ package disc
 
 import (
 	"RoleKeeper/cons"
-	"RoleKeeper/rclog"
+	"RoleKeeper/cwlog"
 	"bytes"
 	"compress/zlib"
 	"encoding/binary"
@@ -51,7 +51,7 @@ func WriteAllCluster() {
 	}
 	wg.Wait()
 	endTime := time.Now()
-	rclog.DoLog("DB Write Complete, took: " + endTime.Sub(startTime).String())
+	cwlog.DoLog("DB Write Complete, took: " + endTime.Sub(startTime).String())
 
 }
 
@@ -100,12 +100,12 @@ func WriteCluster(i int) {
 	name := fmt.Sprintf("db/cluster-%v.dat", i+1)
 	err := os.WriteFile(name, buf[0:b], 0644)
 	if err != nil && err != fs.ErrNotExist {
-		rclog.DoLog(err.Error())
+		cwlog.DoLog(err.Error())
 		return
 	}
 
 	endTime := time.Now()
-	rclog.DoLog("Cluster-" + strconv.FormatInt(int64(i+1), 10) + " write, took: " + endTime.Sub(startTime).String() + ", Wrote: " + strconv.FormatInt(b, 10) + "b")
+	cwlog.DoLog("Cluster-" + strconv.FormatInt(int64(i+1), 10) + " write, took: " + endTime.Sub(startTime).String() + ", Wrote: " + strconv.FormatInt(b, 10) + "b")
 }
 
 func ReadAllClusters() {
@@ -123,7 +123,7 @@ func ReadAllClusters() {
 	wg.Wait()
 	endTime := time.Now()
 
-	rclog.DoLog("Read all clusters, took: " + endTime.Sub(startTime).String())
+	cwlog.DoLog("Read all clusters, took: " + endTime.Sub(startTime).String())
 }
 
 func ReadCluster(i int64) {
@@ -132,7 +132,7 @@ func ReadCluster(i int64) {
 	name := fmt.Sprintf("db/cluster-%v.dat", i+1)
 	data, err := os.ReadFile(name)
 	if err != nil {
-		rclog.DoLog(err.Error())
+		cwlog.DoLog(err.Error())
 		return
 	}
 
@@ -143,7 +143,7 @@ func ReadCluster(i int64) {
 	if Clusters[i] == nil {
 		c := ClusterData{}
 		Clusters[i] = &c
-		//rclog.DoLog("New cluster: " + strconv.FormatInt(i+1, 10))
+		//cwlog.DoLog("New cluster: " + strconv.FormatInt(i+1, 10))
 	}
 
 	version := binary.LittleEndian.Uint16(data[b:])
@@ -151,7 +151,7 @@ func ReadCluster(i int64) {
 	if version == 1 {
 		for b < dataLen {
 			if (dataLen-b)-RecordSize < 0 {
-				rclog.DoLog("Invalid cluster data, stopping.")
+				cwlog.DoLog("Invalid cluster data, stopping.")
 				break
 			}
 			var g *GuildData = Clusters[i].Guilds[gi]
@@ -183,7 +183,7 @@ func ReadCluster(i int64) {
 			b += 2
 
 			if EoR != cons.RecDecimal {
-				rclog.DoLog("Invalid record!:" + strconv.FormatInt(int64(EoR), 10))
+				cwlog.DoLog("Invalid record!:" + strconv.FormatInt(int64(EoR), 10))
 				return
 			}
 
@@ -191,17 +191,17 @@ func ReadCluster(i int64) {
 			gi++
 		}
 	} else {
-		rclog.DoLog("Invalid cluster version.")
+		cwlog.DoLog("Invalid cluster version.")
 		return
 	}
 
 	endTime := time.Now()
-	rclog.DoLog("Cluster-" + strconv.FormatInt(int64(i+1), 10) + " read, took: " + endTime.Sub(startTime).String() + ", Read: " + strconv.FormatInt(b, 10) + "b")
+	cwlog.DoLog("Cluster-" + strconv.FormatInt(int64(i+1), 10) + " read, took: " + endTime.Sub(startTime).String() + ", Read: " + strconv.FormatInt(b, 10) + "b")
 }
 
 func UpdateGuildLookup() {
 	startTime := time.Now()
-	rclog.DoLog("Updating guild lookup map.")
+	cwlog.DoLog("Updating guild lookup map.")
 
 	for ci, c := range Clusters {
 		if c == nil {
@@ -221,7 +221,7 @@ func UpdateGuildLookup() {
 
 	//debug.FreeOSMemory()
 	endTime := time.Now()
-	rclog.DoLog("Guild lookup map update, took: " + endTime.Sub(startTime).String())
+	cwlog.DoLog("Guild lookup map update, took: " + endTime.Sub(startTime).String())
 }
 
 func GuildLookupRead(i uint64) *GuildData {

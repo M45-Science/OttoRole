@@ -4,9 +4,9 @@ import (
 	"RoleKeeper/cfg"
 	"RoleKeeper/command"
 	"RoleKeeper/cons"
+	"RoleKeeper/cwlog"
 	"RoleKeeper/disc"
 	"RoleKeeper/glob"
-	"RoleKeeper/rclog"
 	"fmt"
 	"io/fs"
 	"math"
@@ -31,7 +31,7 @@ func main() {
 	debug.SetMaxThreads(disc.ThreadCount * 4)
 
 	glob.Uptime = time.Now().UTC().Round(time.Second)
-	rclog.StartLog()
+	cwlog.StartLog()
 
 	cfg.ReadCfg()
 	cfg.WriteCfg()
@@ -49,18 +49,18 @@ var DiscordConnectAttempts int
 
 func startbot() {
 	if cfg.Config.Token == "" {
-		rclog.DoLog("No discord token.")
+		cwlog.DoLog("No discord token.")
 		return
 	}
 
-	rclog.DoLog("RoleKeeper " + version + " starting.")
-	rclog.DoLog("Max Guilds: " + strconv.FormatInt((cons.MaxClusters*cons.ClusterSize), 10))
+	cwlog.DoLog("RoleKeeper " + version + " starting.")
+	cwlog.DoLog("Max Guilds: " + strconv.FormatInt((cons.MaxClusters*cons.ClusterSize), 10))
 	time.Sleep(3)
 
 	bot, err := discordgo.New("Bot " + cfg.Config.Token)
 
 	if err != nil {
-		rclog.DoLog(fmt.Sprintf("An error occurred when attempting to create the Discord session. Details: %v", err))
+		cwlog.DoLog(fmt.Sprintf("An error occurred when attempting to create the Discord session. Details: %v", err))
 		time.Sleep(time.Minute * (5 * cons.MaxDiscordAttempts))
 		DiscordConnectAttempts++
 
@@ -76,7 +76,7 @@ func startbot() {
 	errb := bot.Open()
 
 	if errb != nil {
-		rclog.DoLog(fmt.Sprintf("An error occurred when attempting to create the Discord session. Details: %v", errb))
+		cwlog.DoLog(fmt.Sprintf("An error occurred when attempting to create the Discord session. Details: %v", errb))
 		time.Sleep(time.Minute * (5 * cons.MaxDiscordAttempts))
 		DiscordConnectAttempts++
 
@@ -92,10 +92,10 @@ func startbot() {
 
 func botReady(s *discordgo.Session, r *discordgo.Ready) {
 
-	botstatus := "https://" + cfg.Config.Domain
+	botstatus := cfg.Config.Domain
 	err := s.UpdateGameStatus(0, botstatus)
 	if err != nil {
-		rclog.DoLog(err.Error())
+		cwlog.DoLog(err.Error())
 	}
 
 	s.AddHandler(command.SlashCommand)
@@ -103,12 +103,12 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 
 	disc.Session = s
 	disc.Ready = r
-	rclog.DoLog("Discord bot ready")
+	cwlog.DoLog("Discord bot ready")
 
 	disc.GuildLookup = make(map[uint64]*disc.GuildData, cons.TSize)
 
-	rclog.DoLog("Record Size: " + strconv.FormatInt(disc.RecordSize, 10) + "b")
-	rclog.DoLog("Cluster Size: " + strconv.FormatInt(disc.RecordSize*cons.ClusterSize+2, 10) + "b")
+	cwlog.DoLog("Record Size: " + strconv.FormatInt(disc.RecordSize, 10) + "b")
+	cwlog.DoLog("Cluster Size: " + strconv.FormatInt(disc.RecordSize*cons.ClusterSize+2, 10) + "b")
 
 	if 1 == 1 {
 		testDatabase()
@@ -124,7 +124,7 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 func testDatabase() {
 	os.RemoveAll("db")
 	os.Mkdir("db", fs.ModePerm)
-	rclog.DoLog("Making test map...")
+	cwlog.DoLog("Making test map...")
 
 	var x int
 	var y int
@@ -135,7 +135,7 @@ func testDatabase() {
 		disc.Clusters[x] =
 			&disc.ClusterData{}
 		//buf := fmt.Sprintf("New Cluster: %v", (x)+1)
-		//rclog.DoLog(buf)
+		//cwlog.DoLog(buf)
 
 		tnow := time.Now().Unix()
 		for y = 0; y < cons.ClusterSize; y++ {
@@ -162,5 +162,5 @@ func testDatabase() {
 		int(math.Ceil(float64(cons.TSize)/float64(cons.ClusterSize))),
 		cons.ClusterSize,
 		cons.ClusterSize*cons.MaxClusters/1000000.0)
-	rclog.DoLog(buf)
+	cwlog.DoLog(buf)
 }

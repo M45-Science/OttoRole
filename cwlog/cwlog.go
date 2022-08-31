@@ -1,4 +1,4 @@
-package rclog
+package cwlog
 
 import (
 	"fmt"
@@ -32,10 +32,10 @@ func StartLog() {
 	t := time.Now()
 
 	/* Create our log file names */
-	glob.LogName = fmt.Sprintf("log/cw-%v-%v-%v.log", t.Day(), t.Month(), t.Year())
+	glob.LogName = fmt.Sprintf("logs/cw-%v-%v-%v.log", t.Day(), t.Month(), t.Year())
 
 	/* Make log directory */
-	errr := os.MkdirAll("log", os.ModePerm)
+	errr := os.MkdirAll("logs", os.ModePerm)
 	if errr != nil {
 		fmt.Print(errr.Error())
 		return

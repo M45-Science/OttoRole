@@ -2,8 +2,8 @@ package command
 
 import (
 	"RoleKeeper/cfg"
+	"RoleKeeper/cwlog"
 	"RoleKeeper/disc"
-	"RoleKeeper/rclog"
 	"fmt"
 	"strings"
 
@@ -25,7 +25,7 @@ func RegisterCommands(s *discordgo.Session, g string) {
 	for i, o := range CL {
 		cmd, err := s.ApplicationCommandCreate(cfg.Config.App, "", o.AppCmd)
 		if err != nil {
-			rclog.DoLog("Failed to create command: " + CL[i].AppCmd.Name)
+			cwlog.DoLog("Failed to create command: " + CL[i].AppCmd.Name)
 			continue
 		}
 		CL[i].AppCmd = cmd
@@ -36,10 +36,10 @@ func ClearCommands() {
 	if /**glob.DoDeregisterCommands && */ disc.Session != nil {
 		cmds, _ := disc.Session.ApplicationCommands(cfg.Config.App, "")
 		for _, v := range cmds {
-			rclog.DoLog(fmt.Sprintf("Deregistered command: %s", v.Name))
+			cwlog.DoLog(fmt.Sprintf("Deregistered command: %s", v.Name))
 			err := disc.Session.ApplicationCommandDelete(disc.Session.State.User.ID, "", v.ID)
 			if err != nil {
-				rclog.DoLog(err.Error())
+				cwlog.DoLog(err.Error())
 			}
 		}
 	}
