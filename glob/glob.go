@@ -11,6 +11,7 @@ var (
 	LogDesc *os.File
 	LogName string
 
+	ServerRunning        bool
 	DoRegisterCommands   *bool
 	DoDeregisterCommands *bool
 	LocalTestMode        *bool

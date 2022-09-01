@@ -26,6 +26,7 @@ const version = "0.0.1"
 
 func main() {
 
+	glob.ServerRunning = true
 	glob.DoRegisterCommands = flag.Bool("regCommands", false, "Register discord commands")
 	glob.DoDeregisterCommands = flag.Bool("deregCommands", false, "Deregister discord commands")
 	glob.LocalTestMode = flag.Bool("testMode", false, "WILL OVER-WRITE CURRENT DB, AND GENERATE A FAKE ONE.")
@@ -125,8 +126,10 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 	disc.UpdateGuildLookup()
 
 	if *glob.DoDeregisterCommands {
-		command.RegisterCommands(s)
+		go command.RegisterCommands(s)
 	}
+
+	go disc.MainLoop()
 }
 
 func testDatabase() {
