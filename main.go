@@ -149,11 +149,11 @@ func testDatabase() {
 
 	cwlog.DoLog("Making test map...")
 
-	tNow := time.Now().Unix()
+	tNow := disc.NowToCompact()
 	for x := 0; x < cons.TSize; x++ {
 
 		//Make guild
-		newGuild := disc.GuildData{LID: uint32(x), Customer: rand.Uint64(), Guild: rand.Uint64(), Added: uint64(tNow), Modified: uint64(tNow), Donator: 0, Premium: 0}
+		newGuild := disc.GuildData{LID: uint32(x), Customer: rand.Uint64(), Guild: rand.Uint64(), Added: uint32(tNow), Modified: uint32(tNow), Donator: 0}
 
 		disc.Clusters[x%cons.NumClusters].Guilds[(x%cons.ClusterSize)/cons.NumClusters] = &newGuild
 	}

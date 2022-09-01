@@ -48,7 +48,7 @@ func WriteAllCluster() {
 }
 
 // Size of all fields, sans version header
-const RecordSize = 38
+const RecordSize = 32
 
 func WriteCluster(i int) {
 	//startTime := time.Now()
@@ -70,12 +70,14 @@ func WriteCluster(i int) {
 		b += 8
 		binary.LittleEndian.PutUint64(buf[b:], g.Guild)
 		b += 8
-		binary.LittleEndian.PutUint64(buf[b:], g.Added)
-		b += 8
-		binary.LittleEndian.PutUint64(buf[b:], g.Modified)
-		b += 8
+		binary.LittleEndian.PutUint32(buf[b:], g.Added)
+		b += 4
+		binary.LittleEndian.PutUint32(buf[b:], g.Modified)
+		b += 4
 		binary.LittleEndian.PutUint16(buf[b:], g.Donator)
 		b += 2
+		buf[b] = cons.RecordEnd
+		b += 1
 
 		Clusters[i].Guilds[gi].Lock.RUnlock()
 	}
@@ -147,15 +149,23 @@ func ReadCluster(i int64) {
 			b += 8
 			g.Guild = binary.LittleEndian.Uint64(data[b:])
 			b += 8
-			g.Added = binary.LittleEndian.Uint64(data[b:])
-			b += 8
-			g.Modified = binary.LittleEndian.Uint64(data[b:])
-			b += 8
+			g.Added = binary.LittleEndian.Uint32(data[b:])
+			b += 4
+			g.Modified = binary.LittleEndian.Uint32(data[b:])
+			b += 4
 			g.Donator = binary.LittleEndian.Uint16(data[b:])
 			b += 2
+			end := data[b]
+			b += 1
 
-			Clusters[i].Guilds[gi] = g
-			gi++
+			if end == cons.RecordEnd {
+				Clusters[i].Guilds[gi] = g
+				gi++
+			} else {
+				buf := fmt.Sprintf("ReadCluster: %v: %v: INVALID RECORD!", name, gi)
+				cwlog.DoLog(buf)
+				return
+			}
 		}
 	} else {
 		cwlog.DoLog("Invalid cluster version.")
@@ -164,6 +174,10 @@ func ReadCluster(i int64) {
 
 	endTime := time.Now()
 	cwlog.DoLog("Cluster-" + strconv.FormatInt(int64(i+1), 10) + " read, took: " + endTime.Sub(startTime).String() + ", Read: " + strconv.FormatInt(b, 10) + "b")
+}
+
+func AppendCluster(guild *GuildData, cid uint32, gid uint32) {
+
 }
 
 func UpdateGuildLookup() {
@@ -183,8 +197,6 @@ func UpdateGuildLookup() {
 				GuildLookup[gid] = Clusters[ci].Guilds[gi]
 				count++
 				GuildLookupLock.Unlock()
-			} else {
-				cwlog.DoLog("*** GUILD-ID ALREADY OCCUPIED ***")
 			}
 		}
 	}
@@ -202,4 +214,42 @@ func GuildLookupRead(i uint64) *GuildData {
 	g := GuildLookup[i]
 	GuildLookupLock.RUnlock()
 	return g
+}
+
+func AddGuild(guildid uint64) {
+
+	LID_TOP++
+	cid := LID_TOP % cons.NumClusters
+	gid := (LID_TOP % cons.ClusterSize) / cons.NumClusters
+
+	tNow := NowToCompact()
+	Clusters[cid].Guilds[gid] = &GuildData{LID: LID_TOP, Guild: guildid, Added: uint32(tNow), Modified: uint32(tNow)}
+	UpdateGuildLookup()
+}
+
+func UpdateGuild(guild *GuildData) {
+	if guild == nil {
+		return
+	}
+	lid := guild.LID
+	cid := lid % cons.NumClusters
+	gid := (lid % cons.ClusterSize) / cons.NumClusters
+
+	guildData := Clusters[cid].Guilds[gid]
+	AppendCluster(guildData, cid, gid)
+}
+
+// Give current time in compact format
+func NowToCompact() uint32 {
+	tNow := time.Now().UTC().Unix()
+	return uint32(tNow - cons.RoleKeeperEpoch)
+}
+
+// Compact format to unix time
+func CompactToUnix(input uint32) uint64 {
+	return uint64(input) + cons.RoleKeeperEpoch
+}
+
+func UnixToCompact(input uint64) uint32 {
+	return uint32(input - cons.RoleKeeperEpoch)
 }

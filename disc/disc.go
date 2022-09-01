@@ -30,16 +30,13 @@ type RoleData struct {
 
 type GuildData struct {
 	//Name type bytes
-	LID       uint32 //4
-	Customer  uint64 //8
-	Guild     uint64 //8
-	Added     uint64 //8
-	Modified  uint64 //8
-	ReservedA uint64 //8
+	LID      uint32 //4
+	Customer uint64 //8
+	Guild    uint64 //8
+	Added    uint32 //4
+	Modified uint32 //4
 
-	Donator   uint16 //2
-	Premium   uint16 //2
-	ReservedB uint16 //2
+	Donator uint16 //2
 
 	Roles []RoleData
 	Lock  sync.RWMutex
