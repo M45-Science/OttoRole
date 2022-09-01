@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"runtime/debug"
 	"strconv"
 	"sync"
 	"time"
@@ -20,6 +21,7 @@ import (
 var (
 	DBWriteLock sync.Mutex
 	DBLock      sync.RWMutex
+	LID_TOP     uint32
 )
 
 func compressZip(data []byte) []byte {
@@ -37,19 +39,9 @@ func WriteAllCluster() {
 
 	startTime := time.Now()
 
-	wg := sizedwaitgroup.New(1)
-
-	for i, c := range Clusters {
-		if c == nil {
-			break
-		}
-		wg.Add()
-		go func(i int) {
-			WriteCluster(i)
-			wg.Done()
-		}(i)
+	for i := range Clusters {
+		WriteCluster(i)
 	}
-	wg.Wait()
 	endTime := time.Now()
 	cwlog.DoLog("DB Write Complete, took: " + endTime.Sub(startTime).String())
 
@@ -59,7 +51,7 @@ func WriteAllCluster() {
 const RecordSize = 38
 
 func WriteCluster(i int) {
-	startTime := time.Now()
+	//startTime := time.Now()
 
 	var buf [(RecordSize * (cons.ClusterSize)) + 2]byte
 	var b int64
@@ -88,14 +80,20 @@ func WriteCluster(i int) {
 		Clusters[i].Guilds[gi].Lock.RUnlock()
 	}
 	name := fmt.Sprintf("data/db/cluster-%v.dat", i+1)
-	err := os.WriteFile(name, buf[0:b], 0644)
+	err := os.WriteFile(name+".tmp", buf[0:b], 0644)
 	if err != nil && err != fs.ErrNotExist {
 		cwlog.DoLog(err.Error())
 		return
 	}
+	err = os.Rename(name+".tmp", name)
 
-	endTime := time.Now()
-	cwlog.DoLog("Cluster-" + strconv.FormatInt(int64(i+1), 10) + " write, took: " + endTime.Sub(startTime).String() + ", Wrote: " + strconv.FormatInt(b, 10) + "b")
+	if err != nil {
+		cwlog.DoLog("WriteCluster: Couldn't rename file: " + name)
+		return
+	}
+
+	//endTime := time.Now()
+	//cwlog.DoLog("Cluster-" + strconv.FormatInt(int64(i+1), 10) + " write, took: " + endTime.Sub(startTime).String() + ", Wrote: " + strconv.FormatInt(b, 10) + "b")
 }
 
 func ReadAllClusters() {
@@ -103,7 +101,7 @@ func ReadAllClusters() {
 	wg := sizedwaitgroup.New(ThreadCount)
 
 	startTime := time.Now()
-	for x := 0; x < cons.TSize/cons.ClusterSize && x < cons.MaxClusters; x++ {
+	for x := 0; x < cons.TSize/cons.ClusterSize && x < cons.NumClusters; x++ {
 		wg.Add()
 		go func(x int) {
 			ReadCluster(int64(x))
@@ -129,12 +127,6 @@ func ReadCluster(i int64) {
 	dataLen := int64(len(data))
 	var b int64
 	var gi int64
-
-	if Clusters[i] == nil {
-		c := ClusterData{}
-		Clusters[i] = &c
-		//cwlog.DoLog("New cluster: " + strconv.FormatInt(i+1, 10))
-	}
 
 	version := binary.LittleEndian.Uint16(data[b:])
 	b += 2
@@ -178,24 +170,30 @@ func UpdateGuildLookup() {
 	startTime := time.Now()
 	cwlog.DoLog("Updating guild lookup map.")
 
-	for ci, c := range Clusters {
-		if c == nil {
-			break
-		}
-		for gi, g := range c.Guilds {
-			if g == nil {
+	count := 0
+	for ci := 0; ci < cons.NumClusters; ci++ {
+		for gi := 0; gi < cons.ClusterSize; gi++ {
+			if Clusters[ci].Guilds[gi] == nil {
 				break
 			}
-			if GuildLookup[g.Guild] == nil {
+
+			gid := Clusters[ci].Guilds[gi].Guild
+			if GuildLookup[gid] == nil {
 				GuildLookupLock.Lock()
-				GuildLookup[g.Guild] = Clusters[ci].Guilds[gi]
+				GuildLookup[gid] = Clusters[ci].Guilds[gi]
+				count++
 				GuildLookupLock.Unlock()
+			} else {
+				cwlog.DoLog("*** GUILD-ID ALREADY OCCUPIED ***")
 			}
 		}
 	}
 
-	//debug.FreeOSMemory()
+	debug.FreeOSMemory()
 	endTime := time.Now()
+
+	buf := fmt.Sprintf("guilds: %v", count)
+	cwlog.DoLog(buf)
 	cwlog.DoLog("Guild lookup map update, took: " + endTime.Sub(startTime).String())
 }
 

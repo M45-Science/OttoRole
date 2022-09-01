@@ -13,10 +13,10 @@ var (
 	GuildLookup     map[uint64]*GuildData
 	GuildLookupLock sync.RWMutex
 
-	Session    *discordgo.Session
-	Ready      *discordgo.Ready
-	Clusters   [cons.MaxClusters]*ClusterData
-	ClusterTop int
+	Session  *discordgo.Session
+	Ready    *discordgo.Ready
+	Clusters [cons.NumClusters]ClusterData
+	LIDTop   int
 )
 
 type ClusterData struct {
