@@ -90,7 +90,7 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 func EphemeralResponse(s *discordgo.Session, i *discordgo.InteractionCreate, color int, title, message string) {
-	cwlog.DoLog("EphemeralResponse:\n" + i.Member.User.Username + "\n" + title + "\n" + message)
+	//cwlog.DoLog("EphemeralResponse:\n" + i.Member.User.Username + "\n" + title + "\n" + message)
 
 	var elist []*discordgo.MessageEmbed
 	elist = append(elist, &discordgo.MessageEmbed{Title: title, Description: message, Color: color})
