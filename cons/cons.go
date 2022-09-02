@@ -6,6 +6,7 @@ const (
 	ClusterPrefix      = "cluster-"
 	ClusterSuffix      = ".ccf"
 	ConfigFile         = "config.json"
+	LIDTopFile         = "LIDTop.dat"
 	MaxDiscordAttempts = 50
 	ClusterSize        = 100000
 	NumClusters        = 1000
