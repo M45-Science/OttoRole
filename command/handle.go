@@ -12,7 +12,7 @@ import (
 )
 
 type Command struct {
-	Command func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	Command func(s *discordgo.Session, i *discordgo.InteractionCreate, guild *disc.GuildData)
 	AppCmd  *discordgo.ApplicationCommand
 
 	AdminOnly bool
@@ -61,8 +61,16 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if i.Type == discordgo.InteractionApplicationCommand {
 		data := i.ApplicationCommandData()
 
-		if strings.EqualFold(data.Name, "role") {
-			fmt.Println("Meep.")
+		for _, c := range cmds {
+			if strings.EqualFold(data.Name, c.AppCmd.Name) {
+				g := disc.GuildLookupReadString(i.GuildID)
+				if g != nil {
+					c.Command(s, i, g)
+				} else {
+					//Add guild
+				}
+				return
+			}
 		}
 	}
 

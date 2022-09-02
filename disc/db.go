@@ -48,7 +48,7 @@ func WriteAllCluster() {
 }
 
 // Size of all fields, sans version header
-const RecordSize = 32
+const RecordSize = 27
 
 func WriteCluster(i int) {
 	//startTime := time.Now()
@@ -72,10 +72,8 @@ func WriteCluster(i int) {
 		b += 8
 		binary.LittleEndian.PutUint32(buf[b:], g.Added)
 		b += 4
-		binary.LittleEndian.PutUint32(buf[b:], g.Modified)
-		b += 4
-		binary.LittleEndian.PutUint16(buf[b:], g.Donator)
-		b += 2
+		buf[b] = g.Donator
+		b += 1
 		buf[b] = cons.RecordEnd
 		b += 1
 
@@ -151,10 +149,8 @@ func ReadCluster(i int64) {
 			b += 8
 			g.Added = binary.LittleEndian.Uint32(data[b:])
 			b += 4
-			g.Modified = binary.LittleEndian.Uint32(data[b:])
-			b += 4
-			g.Donator = binary.LittleEndian.Uint16(data[b:])
-			b += 2
+			g.Donator = data[b]
+			b += 1
 			end := data[b]
 			b += 1
 
@@ -214,6 +210,17 @@ func GuildLookupRead(i uint64) *GuildData {
 	g := GuildLookup[i]
 	GuildLookupLock.RUnlock()
 	return g
+}
+
+func GuildLookupReadString(i string) *GuildData {
+	GuildLookupLock.RLock()
+	val, err := strconv.ParseUint(i, 10, 64)
+	if err == nil {
+		g := GuildLookup[val]
+		return g
+	}
+	GuildLookupLock.RUnlock()
+	return nil
 }
 
 func AddGuild(guildid uint64) {

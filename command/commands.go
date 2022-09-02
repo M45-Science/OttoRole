@@ -1,6 +1,12 @@
 package command
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"RoleKeeper/cwlog"
+	"RoleKeeper/disc"
+	"fmt"
+
+	"github.com/bwmarrin/discordgo"
+)
 
 var cmds = []Command{
 	{
@@ -12,6 +18,7 @@ var cmds = []Command{
 	},
 }
 
-func RoleCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
-
+func RoleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, guild *disc.GuildData) {
+	buf := fmt.Sprintf("LID: %v", guild.LID)
+	cwlog.DoLog(buf)
 }

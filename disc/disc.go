@@ -36,7 +36,7 @@ type GuildData struct {
 	Added    uint32 //4
 	Modified uint32 //4
 
-	Donator uint16 //2
+	Donator uint8 //8
 
 	Roles []RoleData
 	Lock  sync.RWMutex
