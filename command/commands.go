@@ -11,8 +11,8 @@ import (
 var cmds = []Command{
 	{
 		AppCmd: &discordgo.ApplicationCommand{
-			Name:        "role",
-			Description: "Assign roles to yourself!",
+			Name:        "roles",
+			Description: "Add or Remove roles to yourself, for groups and notifcations!",
 		},
 		Command: RoleCommand,
 	},
