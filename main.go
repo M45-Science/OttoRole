@@ -60,7 +60,7 @@ func startbot() {
 		return
 	}
 
-	cwlog.DoLog(cons.BotName + " " + version + " starting.")
+	cwlog.DoLog("\n\n" + cons.BotName + " " + version + " starting.")
 	cwlog.DoLog("Max Guilds: " + strconv.FormatInt((cons.NumClusters*cons.ClusterSize), 10))
 
 	bot, err := discordgo.New("Bot " + cfg.Config.Token)
