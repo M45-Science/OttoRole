@@ -6,7 +6,6 @@ import (
 	"RoleKeeper/disc"
 	"RoleKeeper/glob"
 	"fmt"
-	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -58,20 +57,49 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	if i.Type == discordgo.InteractionApplicationCommand {
-		data := i.ApplicationCommandData()
+	/* App commands only */
+	if i.Type != discordgo.InteractionApplicationCommand {
+		return
+	}
 
-		for _, c := range cmds {
-			if strings.EqualFold(data.Name, c.AppCmd.Name) {
-				g := disc.GuildLookupReadString(i.GuildID)
-				if g != nil {
-					c.Command(s, i, g)
-				} else {
-					//Add guild
-				}
-				return
-			}
+	g := disc.GuildLookupReadString(i.GuildID)
+	/* Ignore guilds not in our DB */
+	if g == nil {
+		EphemeralResponse(s, i, 0xFF0000, "Error:", "Sorry, there aren't any roles available at the moment.")
+
+		buf := fmt.Sprintf("Guild not found: %v", i.GuildID)
+		cwlog.DoLog(buf)
+		return
+	}
+
+	data := i.ApplicationCommandData()
+	CmdName := data.Name
+
+	/* Ignore empty command IDs */
+	if CmdName == "" {
+		return
+	}
+
+	for _, c := range cmds {
+		if c.AppCmd.Name == CmdName {
+			c.Command(s, i, g)
+			return
 		}
 	}
 
+}
+
+func EphemeralResponse(s *discordgo.Session, i *discordgo.InteractionCreate, color int, title, message string) {
+	cwlog.DoLog("EphemeralResponse:\n" + i.Member.User.Username + "\n" + title + "\n" + message)
+
+	var elist []*discordgo.MessageEmbed
+	elist = append(elist, &discordgo.MessageEmbed{Title: title, Description: message, Color: color})
+
+	//1 << 6 is ephemeral/private
+	respData := &discordgo.InteractionResponseData{Embeds: elist, Flags: 1 << 6}
+	resp := &discordgo.InteractionResponse{Type: discordgo.InteractionResponseChannelMessageWithSource, Data: respData}
+	err := s.InteractionRespond(i.Interaction, resp)
+	if err != nil {
+		cwlog.DoLog(err.Error())
+	}
 }

@@ -1,6 +1,7 @@
 package cons
 
 const (
+	BotName            = "RoleKeeper"
 	DBName             = "database.json"
 	ClusterPrefix      = "cluster-"
 	ClusterSuffix      = ".ccf"
