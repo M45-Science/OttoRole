@@ -3,3 +3,4 @@ RoleKeeper
 data/
 guilddb.json
 *.dat
+db-dump.json

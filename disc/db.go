@@ -3,25 +3,24 @@ package disc
 import (
 	"RoleKeeper/cons"
 	"RoleKeeper/cwlog"
+	"RoleKeeper/glob"
 	"bytes"
 	"compress/zlib"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"log"
 	"os"
 	"runtime/debug"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/remeh/sizedwaitgroup"
 )
 
 var (
-	DBWriteLock sync.Mutex
-	DBLock      sync.RWMutex
-	LID_TOP     uint32
+	LID_TOP uint32
 )
 
 func compressZip(data []byte) []byte {
@@ -203,6 +202,10 @@ func UpdateGuildLookup() {
 	buf := fmt.Sprintf("guilds: %v", count)
 	cwlog.DoLog(buf)
 	cwlog.DoLog("Guild lookup map update, took: " + endTime.Sub(startTime).String())
+
+	if *glob.LocalTestMode {
+		DumpGuilds()
+	}
 }
 
 func GuildLookupRead(i uint64) *GuildData {
@@ -259,4 +262,51 @@ func CompactToUnix(input uint32) uint64 {
 
 func UnixToCompact(input uint64) uint32 {
 	return uint32(input - cons.RoleKeeperEpoch)
+}
+
+func DumpGuilds() {
+
+	fo, err := os.Create(cons.DumpName)
+	if err != nil {
+		cwlog.DoLog("Couldn't open db file, skipping...")
+		return
+	}
+	/*  close fo on exit and check for its returned error */
+	defer func() {
+		if err := fo.Close(); err != nil {
+			panic(err)
+		}
+	}()
+
+	GuildLookupLock.RLock()
+
+	cwlog.DoLog("DumpGuilds: Writing guilds...")
+
+	outbuf := new(bytes.Buffer)
+	enc := json.NewEncoder(outbuf)
+	if err := enc.Encode(GuildLookup); err != nil {
+		cwlog.DoLog("DumpGuilds: enc.Encode failure")
+		return
+	}
+	GuildLookupLock.RUnlock()
+
+	nfilename := cons.DumpName + ".tmp"
+	//compBuf := compressZip(outbuf.Bytes())
+	err = os.WriteFile(nfilename, outbuf.Bytes(), 0644)
+
+	if err != nil {
+		cwlog.DoLog("DumpGuilds: Couldn't write db temp file.")
+		return
+	}
+
+	oldName := nfilename
+	newName := cons.DumpName
+	err = os.Rename(oldName, newName)
+
+	if err != nil {
+		cwlog.DoLog("DumpGuilds: Couldn't rename db temp file.")
+		return
+	}
+
+	cwlog.DoLog("DumpGuilds: Complete!")
 }

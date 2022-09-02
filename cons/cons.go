@@ -2,7 +2,7 @@ package cons
 
 const (
 	BotName            = "RoleKeeper"
-	DBName             = "database.json"
+	DumpName           = "db-dump.json"
 	ClusterPrefix      = "cluster-"
 	ClusterSuffix      = ".ccf"
 	ConfigFile         = "config.json"
@@ -19,5 +19,5 @@ const (
 	RecordEnd = 0x21
 
 	//Test only
-	TSize = 6543
+	TSize = 134
 )
