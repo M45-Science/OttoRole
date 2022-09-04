@@ -72,6 +72,10 @@ func WriteCluster(i int) {
 	binary.LittleEndian.PutUint16(buf[b:], 1) //version number
 	b += 2
 
+	/* Skip if empty */
+	if Clusters[i].Guilds[0] == nil {
+		return
+	}
 	for gi, g := range Clusters[i].Guilds {
 
 		if g == nil {
@@ -134,7 +138,7 @@ func ReadCluster(i int64) {
 	name := fmt.Sprintf("data/db/cluster-%v.dat", i+1)
 	data, err := os.ReadFile(name)
 	if err != nil {
-		cwlog.DoLog(err.Error())
+		//cwlog.DoLog(err.Error())
 		return
 	}
 
@@ -182,7 +186,9 @@ func ReadCluster(i int64) {
 	}
 
 	endTime := time.Now()
-	cwlog.DoLog("Cluster-" + strconv.FormatInt(int64(i+1), 10) + " read, took: " + endTime.Sub(startTime).String() + ", Read: " + strconv.FormatInt(b, 10) + "b")
+	if b > 2 && 1 == 2 {
+		cwlog.DoLog("Cluster-" + strconv.FormatInt(int64(i+1), 10) + " read, took: " + endTime.Sub(startTime).String() + ", Read: " + strconv.FormatInt(b, 10) + "b")
+	}
 }
 
 func AppendCluster(guild *GuildData, cid uint32, gid uint32) {
@@ -191,7 +197,7 @@ func AppendCluster(guild *GuildData, cid uint32, gid uint32) {
 
 func UpdateGuildLookup() {
 	startTime := time.Now()
-	cwlog.DoLog("Updating guild lookup map.")
+	//cwlog.DoLog("Updating guild lookup map.")
 
 	count := 0
 	for ci := 0; ci < cons.NumClusters; ci++ {
@@ -213,8 +219,8 @@ func UpdateGuildLookup() {
 	//debug.FreeOSMemory()
 	endTime := time.Now()
 
-	buf := fmt.Sprintf("guilds: %v", count)
-	cwlog.DoLog(buf)
+	//buf := fmt.Sprintf("guilds: %v", count)
+	//cwlog.DoLog(buf)
 	cwlog.DoLog("Guild lookup map update, took: " + endTime.Sub(startTime).String())
 
 	DumpGuilds()

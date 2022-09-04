@@ -60,8 +60,8 @@ func startbot() {
 		return
 	}
 
-	cwlog.DoLog("\n\n" + cons.BotName + " " + version + " starting.")
-	cwlog.DoLog("Max Guilds: " + strconv.FormatInt((cons.NumClusters*cons.ClusterSize), 10))
+	cwlog.DoLog(cons.BotName + " " + version + " starting.")
+	cwlog.DoLog("Max MegaGuilds: " + strconv.FormatInt((cons.NumClusters*cons.ClusterSize)/1000000, 10))
 
 	bot, err := discordgo.New("Bot " + cfg.Config.Token)
 
@@ -113,7 +113,7 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 	disc.GuildLookup = make(map[uint64]*disc.GuildData, cons.TSize)
 
 	cwlog.DoLog("Record Size: " + strconv.FormatInt(disc.RecordSize, 10) + "b")
-	cwlog.DoLog("Cluster Size: " + strconv.FormatInt(disc.RecordSize*cons.ClusterSize+2, 10) + "b")
+	//cwlog.DoLog("Cluster Size: " + strconv.FormatInt(disc.RecordSize*cons.ClusterSize+2, 10) + "b")
 
 	if *glob.TestMode {
 		testDatabase()

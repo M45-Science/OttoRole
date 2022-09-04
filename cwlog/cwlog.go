@@ -58,4 +58,7 @@ func StartLog() {
 
 	/* Save descriptors, used/closed elsewhere */
 	glob.LogDesc = bdesc
+
+	glob.LogDesc.WriteString("\n\n")
+
 }
