@@ -14,5 +14,5 @@ var (
 	ServerRunning        bool
 	DoRegisterCommands   *bool
 	DoDeregisterCommands *bool
-	LocalTestMode        *bool
+	TestMode             *bool
 )

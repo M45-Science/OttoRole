@@ -29,7 +29,7 @@ func main() {
 	glob.ServerRunning = true
 	glob.DoRegisterCommands = flag.Bool("regCommands", false, "Register discord commands")
 	glob.DoDeregisterCommands = flag.Bool("deregCommands", false, "Deregister discord commands")
-	glob.LocalTestMode = flag.Bool("testMode", false, "WILL OVER-WRITE CURRENT DB, AND GENERATE A FAKE ONE.")
+	glob.TestMode = flag.Bool("testMode", false, "WILL OVER-WRITE CURRENT DB, AND GENERATE A FAKE ONE.")
 	flag.Parse()
 
 	disc.ThreadCount = runtime.NumCPU()
@@ -115,7 +115,7 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 	cwlog.DoLog("Record Size: " + strconv.FormatInt(disc.RecordSize, 10) + "b")
 	cwlog.DoLog("Cluster Size: " + strconv.FormatInt(disc.RecordSize*cons.ClusterSize+2, 10) + "b")
 
-	if *glob.LocalTestMode {
+	if *glob.TestMode {
 		testDatabase()
 		disc.WriteAllCluster()
 		//disc.ReadAllClusters()

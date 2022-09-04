@@ -220,7 +220,7 @@ func UpdateGuildLookup() {
 	cwlog.DoLog(buf)
 	cwlog.DoLog("Guild lookup map update, took: " + endTime.Sub(startTime).String())
 
-	if *glob.LocalTestMode {
+	if *glob.TestMode {
 		DumpGuilds()
 	}
 }
