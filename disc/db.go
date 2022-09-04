@@ -3,7 +3,6 @@ package disc
 import (
 	"RoleKeeper/cons"
 	"RoleKeeper/cwlog"
-	"RoleKeeper/glob"
 	"bytes"
 	"compress/zlib"
 	"encoding/binary"
@@ -12,7 +11,6 @@ import (
 	"io/fs"
 	"log"
 	"os"
-	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -117,7 +115,7 @@ func ReadAllClusters() {
 	wg := sizedwaitgroup.New(ThreadCount)
 
 	startTime := time.Now()
-	for x := 0; x < cons.TSize/cons.ClusterSize && x < cons.NumClusters; x++ {
+	for x := 0; x < cons.NumClusters; x++ {
 		wg.Add()
 		go func(x int) {
 			ReadCluster(int64(x))
@@ -148,17 +146,16 @@ func ReadCluster(i int64) {
 	b += 2
 	if version == 1 {
 		for b < dataLen {
-			if (dataLen-b)-RecordSize < 0 {
-				cwlog.DoLog("Invalid cluster data, stopping.")
-				break
-			}
 			var g *GuildData = Clusters[i].Guilds[gi]
 			if g == nil {
-				g = &GuildData{}
+				g = new(GuildData)
 			}
 
 			g.LID = binary.LittleEndian.Uint32(data[b:])
 			b += 4
+			if g.LID > LID_TOP {
+				LID_TOP = g.LID
+			}
 			g.Customer = binary.LittleEndian.Uint64(data[b:])
 			b += 8
 			g.Guild = binary.LittleEndian.Uint64(data[b:])
@@ -213,16 +210,14 @@ func UpdateGuildLookup() {
 		}
 	}
 
-	debug.FreeOSMemory()
+	//debug.FreeOSMemory()
 	endTime := time.Now()
 
 	buf := fmt.Sprintf("guilds: %v", count)
 	cwlog.DoLog(buf)
 	cwlog.DoLog("Guild lookup map update, took: " + endTime.Sub(startTime).String())
 
-	if *glob.TestMode {
-		DumpGuilds()
-	}
+	DumpGuilds()
 }
 
 func GuildLookupRead(i uint64) *GuildData {
