@@ -1,6 +1,7 @@
 package cons
 
 const (
+	Version            = "001-0904"
 	BotName            = "RoleKeeper"
 	DumpName           = "db-dump.json"
 	ClusterPrefix      = "cluster-"
