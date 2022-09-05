@@ -53,7 +53,7 @@ func WriteAllCluster() {
 
 	startTime := time.Now()
 
-	for i := range Clusters {
+	for i := 0; i < cons.NumClusters; i++ {
 		WriteCluster(i)
 	}
 	endTime := time.Now()
@@ -66,21 +66,20 @@ const v1RecordSize = 27
 
 func WriteCluster(i int) {
 
-	var buf [(v1RecordSize * (cons.ClusterSize)) + 2]byte
+	var buf [(v1RecordSize * (cons.MaxGuilds / cons.NumClusters)) + 2]byte
 	var b int64
 	binary.LittleEndian.PutUint16(buf[b:], 1) //version number
 	b += 2
 
-	/* Skip if empty */
-	if Clusters[i].Guilds[0] == nil {
-		return
-	}
-	for gi, g := range Clusters[i].Guilds {
+	start := i * (cons.MaxGuilds / cons.NumClusters)
+	end := start + (cons.MaxGuilds / cons.NumClusters)
+	for x := start; x < end; x++ {
 
+		g := Database[x]
 		if g == nil {
 			break
 		}
-		Clusters[i].Guilds[gi].Lock.RLock()
+		Database[x].Lock.RLock()
 		binary.LittleEndian.PutUint32(buf[b:], g.LID)
 		b += 4
 		binary.LittleEndian.PutUint64(buf[b:], g.Customer)
@@ -94,7 +93,7 @@ func WriteCluster(i int) {
 		buf[b] = cons.RecordEnd
 		b += 1
 
-		Clusters[i].Guilds[gi].Lock.RUnlock()
+		Database[x].Lock.RUnlock()
 	}
 	name := fmt.Sprintf("data/db/cluster-%v.dat", i+1)
 	err := os.WriteFile(name+".tmp", buf[0:b], 0644)
@@ -139,22 +138,15 @@ func ReadCluster(i int64) {
 
 	dataLen := int64(len(data))
 	var b int64
-	var gi int64
 
 	version := binary.LittleEndian.Uint16(data[b:])
 	b += 2
 	if version == 1 {
 		for b < dataLen {
-			var g *GuildData = Clusters[i].Guilds[gi]
-			if g == nil {
-				g = new(GuildData)
-			}
+			g := new(GuildData)
 
-			g.LID = binary.LittleEndian.Uint32(data[b:])
+			LID := binary.LittleEndian.Uint32(data[b:])
 			b += 4
-			if g.LID > LID_TOP {
-				LID_TOP = g.LID
-			}
 			g.Customer = binary.LittleEndian.Uint64(data[b:])
 			b += 8
 			g.Guild = binary.LittleEndian.Uint64(data[b:])
@@ -167,10 +159,16 @@ func ReadCluster(i int64) {
 			b += 1
 
 			if end == cons.RecordEnd {
-				Clusters[i].Guilds[gi] = g
-				gi++
+				if LID >= cons.MaxGuilds {
+					cwlog.DoLog("LID larger than maxguild.")
+					continue
+				}
+				if LID > LID_TOP {
+					LID_TOP = LID
+				}
+				Database[LID] = g
 			} else {
-				buf := fmt.Sprintf("ReadCluster: %v: %v: INVALID RECORD!", name, gi)
+				buf := fmt.Sprintf("ReadCluster: %v: %v: INVALID RECORD!", name, LID)
 				cwlog.DoLog(buf)
 				return
 			}
@@ -193,21 +191,15 @@ func AppendCluster(guild *GuildData, cid uint32, gid uint32) {
 func UpdateGuildLookup() {
 	startTime := time.Now()
 
-	count := 0
-	for ci := 0; ci < cons.NumClusters; ci++ {
-		for gi := 0; gi < cons.ClusterSize; gi++ {
-			if Clusters[ci].Guilds[gi] == nil {
-				break
-			}
+	var x uint32
+	for x = 0; x < LID_TOP; x++ {
 
-			gid := Clusters[ci].Guilds[gi].Guild
-			if GuildLookup[gid] == nil {
-				GuildLookupLock.Lock()
-				GuildLookup[gid] = Clusters[ci].Guilds[gi]
-				count++
-				GuildLookupLock.Unlock()
-			}
+		if GuildLookup[Database[x].Guild] == nil {
+			GuildLookupLock.Lock()
+			GuildLookup[Database[x].Guild] = Database[x]
+			GuildLookupLock.Unlock()
 		}
+
 	}
 
 	endTime := time.Now()
@@ -237,24 +229,10 @@ func GuildLookupReadString(i string) *GuildData {
 func AddGuild(guildid uint64) {
 
 	LID_TOP++
-	cid := LID_TOP % cons.NumClusters
-	gid := (LID_TOP % cons.ClusterSize) / cons.NumClusters
 
 	tNow := NowToCompact()
-	Clusters[cid].Guilds[gid] = &GuildData{LID: LID_TOP, Guild: guildid, Added: uint32(tNow), Modified: uint32(tNow)}
+	Database[LID_TOP] = &GuildData{LID: LID_TOP, Guild: guildid, Added: uint32(tNow), Modified: uint32(tNow)}
 	UpdateGuildLookup()
-}
-
-func UpdateGuild(guild *GuildData) {
-	if guild == nil {
-		return
-	}
-	lid := guild.LID
-	cid := lid % cons.NumClusters
-	gid := (lid % cons.ClusterSize) / cons.NumClusters
-
-	guildData := Clusters[cid].Guilds[gid]
-	AppendCluster(guildData, cid, gid)
 }
 
 // Current time in compact format

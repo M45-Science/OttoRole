@@ -9,8 +9,8 @@ const (
 	ConfigFile         = "config.json"
 	LIDTopFile         = "LIDTop.dat"
 	MaxDiscordAttempts = 50
-	ClusterSize        = 100000
-	NumClusters        = 1000
+	NumClusters        = 128
+	MaxGuilds          = 16384
 
 	/*GMT Thu Sep 01 2022 06:00:00 GMT+0000*/
 	RoleKeeperEpoch = 1662012000

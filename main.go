@@ -59,7 +59,7 @@ func startbot() {
 	}
 
 	cwlog.DoLog(cons.BotName + " " + cons.Version + " starting.")
-	cwlog.DoLog("Max MegaGuilds: " + strconv.FormatInt((cons.NumClusters*cons.ClusterSize)/1000000, 10))
+	cwlog.DoLog("Max Guilds: " + strconv.FormatInt(cons.MaxGuilds, 10))
 
 	bot, err := discordgo.New("Bot " + cfg.Config.Token)
 
@@ -149,8 +149,7 @@ func testDatabase() {
 
 		//Make guild
 		newGuild := disc.GuildData{LID: uint32(x), Customer: rand.Uint64(), Guild: rand.Uint64(), Added: uint32(tNow), Modified: uint32(tNow), Donator: 0}
-
-		disc.Clusters[x%cons.NumClusters].Guilds[(x%cons.ClusterSize)/cons.NumClusters] = &newGuild
+		disc.Database[x] = &newGuild
 	}
 	disc.LID_TOP = cons.TSize
 

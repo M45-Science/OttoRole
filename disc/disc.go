@@ -15,13 +15,8 @@ var (
 
 	Session  *discordgo.Session
 	Ready    *discordgo.Ready
-	Clusters [cons.NumClusters]ClusterData
-	LIDTop   int
+	Database [cons.MaxGuilds]*GuildData
 )
-
-type ClusterData struct {
-	Guilds [cons.ClusterSize]*GuildData
-}
 
 type RoleData struct {
 	Name string
