@@ -30,16 +30,16 @@ type RoleData struct {
 
 type GuildData struct {
 	//Name type bytes
-	LID      uint32 //4
-	Customer uint64 //8
-	Guild    uint64 //8
-	Added    uint32 //4
-	Modified uint32 //4
+	LID      uint32 `json:"L"` //4
+	Customer uint64 `json:"C"` //8
+	Guild    uint64 `json:"G"` //8
+	Added    uint32 `json:"A"` //4
+	Modified uint32 `json:"M"` //4
 
-	Donator uint8 //8
+	Donator uint8 `json:"D"` //1
 
-	Roles []RoleData
-	Lock  sync.RWMutex
+	Roles []RoleData   `json:"-"`
+	Lock  sync.RWMutex `json:"-"`
 }
 
 func IntToID(id uint64) string {
