@@ -9,7 +9,6 @@ import (
 	"RoleKeeper/glob"
 	"flag"
 	"fmt"
-	"math"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -22,8 +21,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-const version = "0.0.1"
-
 func main() {
 
 	glob.ServerRunning = true
@@ -33,7 +30,7 @@ func main() {
 	flag.Parse()
 
 	disc.ThreadCount = runtime.NumCPU()
-	debug.SetMemoryLimit(1024 * 1024 * 1024 * 24)
+	debug.SetMemoryLimit(1024 * 1024 * 1024 * 24) //24gb
 	debug.SetMaxThreads(disc.ThreadCount * 2)
 
 	glob.Uptime = time.Now().UTC().Round(time.Second)
@@ -49,6 +46,7 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
+	cwlog.DoLog("uptime: " + time.Since(glob.Uptime).String())
 	command.ClearCommands()
 }
 
@@ -60,7 +58,7 @@ func startbot() {
 		return
 	}
 
-	cwlog.DoLog(cons.BotName + " " + version + " starting.")
+	cwlog.DoLog(cons.BotName + " " + cons.Version + " starting.")
 	cwlog.DoLog("Max MegaGuilds: " + strconv.FormatInt((cons.NumClusters*cons.ClusterSize)/1000000, 10))
 
 	bot, err := discordgo.New("Bot " + cfg.Config.Token)
@@ -112,9 +110,6 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 
 	disc.GuildLookup = make(map[uint64]*disc.GuildData, cons.TSize)
 
-	cwlog.DoLog("Record Size: " + strconv.FormatInt(disc.RecordSize, 10) + "b")
-	//cwlog.DoLog("Cluster Size: " + strconv.FormatInt(disc.RecordSize*cons.ClusterSize+2, 10) + "b")
-
 	if *glob.TestMode {
 		testDatabase()
 		disc.WriteAllCluster()
@@ -147,7 +142,7 @@ func testDatabase() {
 		return
 	}
 
-	cwlog.DoLog("Making test map...")
+	cwlog.DoLog("Making test database...")
 
 	tNow := disc.NowToCompact()
 	for x := 0; x < cons.TSize; x++ {
@@ -159,10 +154,6 @@ func testDatabase() {
 	}
 	disc.LID_TOP = cons.TSize
 
-	buf := fmt.Sprintf("Guilds: %v, Clusters: %v, ClusterSize: %v, MaxGuilds: %v",
-		disc.LIDTop,
-		int(math.Ceil(float64(cons.TSize)/float64(cons.ClusterSize))),
-		cons.ClusterSize,
-		cons.ClusterSize*cons.NumClusters)
+	buf := fmt.Sprintf("Guilds: %v", disc.LID_TOP)
 	cwlog.DoLog(buf)
 }

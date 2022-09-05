@@ -62,12 +62,11 @@ func WriteAllCluster() {
 }
 
 // Size of all fields, sans version header
-const RecordSize = 27
+const v1RecordSize = 27
 
 func WriteCluster(i int) {
-	//startTime := time.Now()
 
-	var buf [(RecordSize * (cons.ClusterSize)) + 2]byte
+	var buf [(v1RecordSize * (cons.ClusterSize)) + 2]byte
 	var b int64
 	binary.LittleEndian.PutUint16(buf[b:], 1) //version number
 	b += 2
@@ -109,9 +108,6 @@ func WriteCluster(i int) {
 		cwlog.DoLog("WriteCluster: Couldn't rename file: " + name)
 		return
 	}
-
-	//endTime := time.Now()
-	//cwlog.DoLog("Cluster-" + strconv.FormatInt(int64(i+1), 10) + " write, took: " + endTime.Sub(startTime).String() + ", Wrote: " + strconv.FormatInt(b, 10) + "b")
 }
 
 func ReadAllClusters() {
@@ -138,7 +134,6 @@ func ReadCluster(i int64) {
 	name := fmt.Sprintf("data/db/cluster-%v.dat", i+1)
 	data, err := os.ReadFile(name)
 	if err != nil {
-		//cwlog.DoLog(err.Error())
 		return
 	}
 
@@ -197,7 +192,6 @@ func AppendCluster(guild *GuildData, cid uint32, gid uint32) {
 
 func UpdateGuildLookup() {
 	startTime := time.Now()
-	//cwlog.DoLog("Updating guild lookup map.")
 
 	count := 0
 	for ci := 0; ci < cons.NumClusters; ci++ {
@@ -216,11 +210,7 @@ func UpdateGuildLookup() {
 		}
 	}
 
-	//debug.FreeOSMemory()
 	endTime := time.Now()
-
-	//buf := fmt.Sprintf("guilds: %v", count)
-	//cwlog.DoLog(buf)
 	cwlog.DoLog("Guild lookup map update, took: " + endTime.Sub(startTime).String())
 
 	DumpGuilds()
@@ -267,7 +257,7 @@ func UpdateGuild(guild *GuildData) {
 	AppendCluster(guildData, cid, gid)
 }
 
-// Give current time in compact format
+// Current time in compact format
 func NowToCompact() uint32 {
 	tNow := time.Now().UTC().Unix()
 	return uint32(tNow - cons.RoleKeeperEpoch)
