@@ -46,7 +46,8 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
-	cwlog.DoLog("uptime: " + time.Since(glob.Uptime).String())
+	tNow := time.Now().Round(time.Second)
+	cwlog.DoLog("uptime: " + tNow.Sub(glob.Uptime).String())
 	command.ClearCommands()
 }
 
