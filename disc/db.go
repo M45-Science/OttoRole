@@ -34,14 +34,13 @@ func compressZip(data []byte) []byte {
 
 func WriteLIDTop() {
 	buf := fmt.Sprintf("LIDTop: %v", LID_TOP)
-
-	err := os.WriteFile(cons.LIDTopFile+".tmp", []byte(buf), 0644)
+	err := os.WriteFile("data/"+cons.LIDTopFile+".tmp", []byte(buf), 0644)
 
 	if err != nil && err != fs.ErrNotExist {
 		cwlog.DoLog(err.Error())
 		return
 	}
-	err = os.Rename(cons.LIDTopFile+".tmp", cons.LIDTopFile)
+	err = os.Rename("data/"+cons.LIDTopFile+".tmp", "data/"+cons.LIDTopFile)
 
 	if err != nil {
 		cwlog.DoLog("WriteLIDTop: Couldn't rename file: " + cons.LIDTopFile)
