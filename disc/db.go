@@ -94,17 +94,20 @@ func WriteCluster(i int) {
 
 		Database[x].Lock.RUnlock()
 	}
-	name := fmt.Sprintf("data/db/cluster-%v.dat", i+1)
-	err := os.WriteFile(name+".tmp", buf[0:b], 0644)
-	if err != nil && err != fs.ErrNotExist {
-		cwlog.DoLog(err.Error())
-		return
-	}
-	err = os.Rename(name+".tmp", name)
+	/* Don't write empty files */
+	if b > 2 {
+		name := fmt.Sprintf("data/db/cluster-%v.dat", i+1)
+		err := os.WriteFile(name+".tmp", buf[0:b], 0644)
+		if err != nil && err != fs.ErrNotExist {
+			cwlog.DoLog(err.Error())
+			return
+		}
+		err = os.Rename(name+".tmp", name)
 
-	if err != nil {
-		cwlog.DoLog("WriteCluster: Couldn't rename file: " + name)
-		return
+		if err != nil {
+			cwlog.DoLog("WriteCluster: Couldn't rename file: " + name)
+			return
+		}
 	}
 }
 

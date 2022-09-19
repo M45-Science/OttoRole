@@ -1,7 +1,7 @@
 package cons
 
 const (
-	Version            = "001-0904"
+	Version            = "001-09192022"
 	BotName            = "RoleKeeper"
 	DumpName           = "db-dump.json"
 	ClusterPrefix      = "cluster-"
@@ -10,7 +10,7 @@ const (
 	LIDTopFile         = "LIDTop.dat"
 	MaxDiscordAttempts = 50
 	NumClusters        = 128
-	MaxGuilds          = 16384
+	MaxGuilds          = 16384 //Preallocated for speed
 
 	/*GMT Thu Sep 01 2022 06:00:00 GMT+0000*/
 	RoleKeeperEpoch = 1662012000
