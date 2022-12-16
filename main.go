@@ -22,6 +22,18 @@ import (
 )
 
 func main() {
+	/* Make data directory */
+	errr := os.MkdirAll("data", os.ModePerm)
+	if errr != nil {
+		fmt.Print(errr.Error())
+		return
+	}
+	/* Make log directory */
+	errr = os.MkdirAll("data/db", os.ModePerm)
+	if errr != nil {
+		fmt.Print(errr.Error())
+		return
+	}
 
 	glob.ServerRunning = true
 	glob.DoRegisterCommands = flag.Bool("regCommands", false, "Register discord commands")

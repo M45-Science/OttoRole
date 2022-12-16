@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	LID_TOP uint32
+	LID_TOP uint32 = 0
 )
 
 func compressZip(data []byte) []byte {
@@ -70,7 +70,7 @@ func WriteCluster(i int) {
 	binary.LittleEndian.PutUint16(buf[b:], 1) //version number
 	b += 2
 
-	start := i * (cons.MaxGuilds / cons.NumClusters)
+	start := i*(cons.MaxGuilds/cons.NumClusters) + 1
 	end := start + (cons.MaxGuilds / cons.NumClusters)
 	for x := start; x < end; x++ {
 
@@ -78,6 +78,7 @@ func WriteCluster(i int) {
 		if g == nil {
 			break
 		}
+
 		Database[x].Lock.RLock()
 		binary.LittleEndian.PutUint32(buf[b:], g.LID)
 		b += 4
@@ -111,6 +112,7 @@ func WriteCluster(i int) {
 	}
 }
 
+/* TODO: Read whole folder for cluster files, warn if LID_TOP does not match */
 func ReadAllClusters() {
 
 	wg := sizedwaitgroup.New(ThreadCount)
@@ -147,7 +149,7 @@ func ReadCluster(i int64) {
 		for b < dataLen {
 			g := new(GuildData)
 
-			LID := binary.LittleEndian.Uint32(data[b:])
+			g.LID = binary.LittleEndian.Uint32(data[b:])
 			b += 4
 			g.Customer = binary.LittleEndian.Uint64(data[b:])
 			b += 8
@@ -161,16 +163,16 @@ func ReadCluster(i int64) {
 			b += 1
 
 			if end == cons.RecordEnd {
-				if LID >= cons.MaxGuilds {
+				if g.LID >= cons.MaxGuilds {
 					cwlog.DoLog("LID larger than maxguild.")
 					continue
 				}
-				if LID > LID_TOP {
-					LID_TOP = LID
+				if g.LID > LID_TOP {
+					LID_TOP = g.LID
 				}
-				Database[LID] = g
+				Database[g.LID] = g
 			} else {
-				buf := fmt.Sprintf("ReadCluster: %v: %v: INVALID RECORD!", name, LID)
+				buf := fmt.Sprintf("ReadCluster: %v: %v: INVALID RECORD!", name, g.LID)
 				cwlog.DoLog(buf)
 				return
 			}
@@ -194,19 +196,15 @@ func UpdateGuildLookup() {
 	startTime := time.Now()
 
 	var x uint32
-	for x = 0; x < LID_TOP; x++ {
-
-		if GuildLookup[Database[x].Guild] == nil {
-			GuildLookupLock.Lock()
+	for x = 1; x <= LID_TOP; x++ {
+		if Database[x] != nil {
 			GuildLookup[Database[x].Guild] = Database[x]
-			GuildLookupLock.Unlock()
 		}
-
 	}
-
 	endTime := time.Now()
 	cwlog.DoLog("Guild lookup map update, took: " + endTime.Sub(startTime).String())
 
+	WriteAllCluster()
 	DumpGuilds()
 }
 
@@ -219,7 +217,7 @@ func GuildLookupRead(i uint64) *GuildData {
 
 func GuildLookupReadString(i string) *GuildData {
 	GuildLookupLock.RLock()
-	val, err := strconv.ParseUint(i, 10, 64)
+	val, err := GuildStrToInt(i)
 	if err == nil {
 		g := GuildLookup[val]
 		return g
@@ -228,12 +226,19 @@ func GuildLookupReadString(i string) *GuildData {
 	return nil
 }
 
+func GuildStrToInt(i string) (uint64, error) {
+	return strconv.ParseUint(i, 10, 64)
+}
+
 func AddGuild(guildid uint64) {
+	fmt.Println("AddGuild:", guildid)
 
 	LID_TOP++
-
 	tNow := NowToCompact()
-	Database[LID_TOP] = &GuildData{LID: LID_TOP, Guild: guildid, Added: uint32(tNow), Modified: uint32(tNow)}
+	newGuild := GuildData{LID: LID_TOP, Guild: guildid, Added: uint32(tNow), Modified: uint32(tNow), Donator: 0}
+	Database[LID_TOP] = &newGuild
+
+	WriteLIDTop()
 	UpdateGuildLookup()
 }
 

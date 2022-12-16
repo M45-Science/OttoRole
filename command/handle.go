@@ -65,10 +65,18 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	g := disc.GuildLookupReadString(i.GuildID)
 	/* Ignore guilds not in our DB */
 	if g == nil {
-		EphemeralResponse(s, i, 0xFF0000, "Error:", "Sorry, there aren't any roles available at the moment.")
+		EphemeralResponse(s, i, 0xFF0000, "Error:", "Sorry, this guild isn't registered yet!")
 
 		buf := fmt.Sprintf("Guild not found: %v", i.GuildID)
 		cwlog.DoLog(buf)
+
+		/* Add to db */
+		gid, err := disc.GuildStrToInt(i.GuildID)
+		if err == nil {
+			disc.AddGuild(gid)
+		} else {
+			fmt.Println("Failed to parse guildid:", i.GuildID)
+		}
 		return
 	}
 
