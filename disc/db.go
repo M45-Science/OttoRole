@@ -61,7 +61,7 @@ func WriteAllCluster() {
 }
 
 // Size of all fields, sans version header
-const v1RecordSize = 27
+const v1RecordSize = 19
 
 func WriteCluster(i int) {
 
@@ -82,8 +82,6 @@ func WriteCluster(i int) {
 		Database[x].Lock.RLock()
 		binary.LittleEndian.PutUint32(buf[b:], g.LID)
 		b += 4
-		binary.LittleEndian.PutUint64(buf[b:], g.Customer)
-		b += 8
 		binary.LittleEndian.PutUint64(buf[b:], g.Guild)
 		b += 8
 		binary.LittleEndian.PutUint32(buf[b:], g.Added)
@@ -151,8 +149,6 @@ func ReadCluster(i int64) {
 
 			g.LID = binary.LittleEndian.Uint32(data[b:])
 			b += 4
-			g.Customer = binary.LittleEndian.Uint64(data[b:])
-			b += 8
 			g.Guild = binary.LittleEndian.Uint64(data[b:])
 			b += 8
 			g.Added = binary.LittleEndian.Uint32(data[b:])
@@ -231,7 +227,7 @@ func GuildStrToInt(i string) (uint64, error) {
 }
 
 func AddGuild(guildid uint64) {
-	fmt.Println("AddGuild:", guildid)
+	cwlog.DoLog(fmt.Sprintf("AddGuild: %v", guildid))
 
 	LID_TOP++
 	tNow := NowToCompact()

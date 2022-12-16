@@ -75,7 +75,7 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if err == nil {
 			disc.AddGuild(gid)
 		} else {
-			fmt.Println("Failed to parse guildid:", i.GuildID)
+			cwlog.DoLog(fmt.Sprintf("Failed to parse guildid: %v", i.GuildID))
 		}
 		return
 	}
