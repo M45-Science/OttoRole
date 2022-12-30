@@ -19,6 +19,7 @@ const (
 	/* So we need to remember to upgrade this in 220 years ;) */
 
 	RecordEnd = 0x21
+	RoleEnd   = 0x0022
 
 	//Test only
 	TSize = 134

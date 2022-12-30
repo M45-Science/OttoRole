@@ -119,6 +119,20 @@ func WriteCluster(i int) {
 		b += 4
 		buf[b] = g.Donator
 		b += 1
+		if len(g.Roles) > 0 {
+			buf[b] = cons.RoleEnd
+			b += 1
+			for _, role := range g.Roles {
+				binary.LittleEndian.PutUint64(buf[b:], role.ID)
+				b += 8
+				for _, c := range role.Name {
+					binary.LittleEndian.PutUint16(buf[b:], uint16(c))
+					b += 2
+				}
+				buf[b] = cons.RoleEnd
+				b += 1
+			}
+		}
 		buf[b] = cons.RecordEnd
 		b += 1
 
@@ -186,9 +200,9 @@ func ReadCluster(i int64) {
 			b += 4
 			g.Donator = data[b]
 			b += 1
+
 			end := data[b]
 			b += 1
-
 			if end == cons.RecordEnd {
 				if g.LID >= cons.MaxGuilds {
 					cwlog.DoLog("LID larger than maxguild.")
@@ -198,6 +212,27 @@ func ReadCluster(i int64) {
 					LID_TOP = g.LID
 				}
 				Database[g.LID] = g
+				/* Found a role instead of record end */
+			} else if end == cons.RoleEnd {
+				roleid := binary.LittleEndian.Uint64(data[b:])
+				b += 2
+				rr := ' '
+				roleName := ""
+				for rr != cons.RoleEnd {
+					rr = rune(binary.LittleEndian.Uint16(data[b:]))
+					if rr == cons.RoleEnd {
+						break
+					}
+					roleName = roleName + string(rr)
+					b += 2
+				}
+				end = data[b]
+				if end == cons.RecordEnd {
+					role := RoleData{Name: roleName, ID: roleid}
+					g.Roles = append(g.Roles, role)
+				} else {
+					cwlog.DoLog("INVALID RECORD!")
+				}
 			} else {
 				buf := fmt.Sprintf("ReadCluster: %v: %v: INVALID RECORD!", name, g.LID)
 				cwlog.DoLog(buf)
