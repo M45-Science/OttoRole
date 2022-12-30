@@ -137,8 +137,12 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 	if *glob.DoDeregisterCommands {
 		command.RegisterCommands(s)
 	}
+	if *glob.DoDeregisterCommands {
+		command.ClearCommands()
+	}
 
-	MainLoop()
+	go MainLoop()
+
 }
 
 func testDatabase() {

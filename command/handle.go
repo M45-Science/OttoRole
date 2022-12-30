@@ -16,18 +16,34 @@ type Command struct {
 	AppCmd  *discordgo.ApplicationCommand
 
 	AdminOnly bool
+	ModOnly   bool
 }
 
 var CL []Command
+
+var adminPerms int64 = discordgo.PermissionAdministrator
+var modPerms int64 = discordgo.PermissionManageRoles
+var defaultPerms int64 = discordgo.PermissionUseSlashCommands
 
 func RegisterCommands(s *discordgo.Session) {
 	CL = cmds
 
 	for i, o := range CL {
+
+		if o.AdminOnly {
+			o.AppCmd.DefaultMemberPermissions = &adminPerms
+		} else if o.ModOnly {
+			o.AppCmd.DefaultMemberPermissions = &modPerms
+		} else {
+			o.AppCmd.DefaultMemberPermissions = &defaultPerms
+		}
+
 		cmd, err := s.ApplicationCommandCreate(cfg.Config.App, "", o.AppCmd)
 		if err != nil {
 			cwlog.DoLog("Failed to create command: " + CL[i].AppCmd.Name)
 			continue
+		} else {
+			cwlog.DoLog("Registered command: " + CL[i].AppCmd.Name)
 		}
 		CL[i].AppCmd = cmd
 	}
@@ -91,6 +107,13 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	for _, c := range cmds {
 		if c.AppCmd.Name == CmdName {
+			if c.AdminOnly && i.Member.Permissions < discordgo.PermissionAdministrator {
+				EphemeralResponse(s, i, 1, "ERROR:", "You do not have the proper permissions to use this command.")
+				return
+			} else if c.ModOnly && i.Member.Permissions < discordgo.PermissionManageRoles {
+				EphemeralResponse(s, i, 1, "ERROR:", "You do not have the proper permissions to use this command.")
+				return
+			}
 			c.Command(s, i, g)
 			return
 		}

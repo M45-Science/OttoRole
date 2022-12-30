@@ -8,8 +8,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-var modOnly int64 = discordgo.PermissionManageRoles
-
 var cmds = []Command{
 	{
 		AppCmd: &discordgo.ApplicationCommand{
@@ -20,11 +18,11 @@ var cmds = []Command{
 	},
 	{
 		AppCmd: &discordgo.ApplicationCommand{
-			Name:                     "Add-role",
-			Description:              "Add or remove roles to the list",
-			DefaultMemberPermissions: &modOnly,
+			Name:        "add-role",
+			Description: "Add or remove roles to the list",
 		},
 		Command: AddRole,
+		ModOnly: true,
 	},
 }
 
