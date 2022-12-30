@@ -51,7 +51,7 @@ func AddRole(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.Gui
 		availableRoles = append(availableRoles, entry)
 	}
 	if len(availableRoles) <= 0 {
-		disc.EphemeralResponse(s, i, "Error:", "Sorry, there are no eligabile roles that be added!")
+		disc.EphemeralResponse(s, i, "Error:", "Sorry, there are no eligabile roles that can be added!")
 		return
 	}
 
