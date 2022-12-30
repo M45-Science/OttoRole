@@ -11,6 +11,15 @@ var (
 	Ready   *discordgo.Ready
 )
 
+const (
+	DiscRed    = 0xFF0000
+	DiscOrange = 0xFFFF00
+	DiscGreen  = 0x00FF00
+	DiscCyan   = 0x00FFFF
+	DiscBlue   = 0x0000FF
+	DiscPurple = 0xFF00FF
+)
+
 func InteractionResponse(s *discordgo.Session, i *discordgo.InteractionCreate, embed *discordgo.MessageEmbed) {
 	cwlog.DoLog("InteractionResponse:\n" + i.Member.User.Username + "\n" + embed.Title + "\n" + embed.Description)
 
@@ -43,14 +52,13 @@ func FollowupResponse(s *discordgo.Session, i *discordgo.InteractionCreate, f *d
 
 }
 
-func EphemeralResponse(s *discordgo.Session, i *discordgo.InteractionCreate, title, message string) {
+func EphemeralResponse(s *discordgo.Session, i *discordgo.InteractionCreate, color int, title, message string) {
 	cwlog.DoLog("EphemeralResponse:\n" + i.Member.User.Username + "\n" + title + "\n" + message)
 
 	var elist []*discordgo.MessageEmbed
-	elist = append(elist, &discordgo.MessageEmbed{Title: title, Description: message})
+	elist = append(elist, &discordgo.MessageEmbed{Title: title, Description: message, Color: color})
 
-	//1 << 6 is ephemeral/private
-	respData := &discordgo.InteractionResponseData{Embeds: elist, Flags: 1 << 6}
+	respData := &discordgo.InteractionResponseData{Embeds: elist, Flags: discordgo.MessageFlagsEphemeral}
 	resp := &discordgo.InteractionResponse{Type: discordgo.InteractionResponseChannelMessageWithSource, Data: respData}
 	err := s.InteractionRespond(i.Interaction, resp)
 	if err != nil {

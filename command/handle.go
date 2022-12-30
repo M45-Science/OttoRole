@@ -82,19 +82,14 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	g := db.GuildLookupReadString(i.GuildID)
 	/* Ignore guilds not in our DB */
 	if g == nil {
-		EphemeralResponse(s, i, 0xFF0000, "Error:", "Sorry, this guild isn't registered yet!")
-
-		buf := fmt.Sprintf("Guild not found: %v", i.GuildID)
-		cwlog.DoLog(buf)
-
 		/* Add to db */
 		gid, err := db.GuildStrToInt(i.GuildID)
 		if err == nil {
 			db.AddGuild(gid)
 		} else {
 			cwlog.DoLog(fmt.Sprintf("Failed to parse guildid: %v", i.GuildID))
+			return
 		}
-		return
 	}
 
 	data := i.ApplicationCommandData()
@@ -108,10 +103,10 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	for _, c := range cmds {
 		if c.AppCmd.Name == CmdName {
 			if c.AdminOnly && i.Member.Permissions < discordgo.PermissionAdministrator {
-				EphemeralResponse(s, i, 1, "ERROR:", "You do not have the proper permissions to use this command.")
+				disc.EphemeralResponse(s, i, disc.DiscRed, "ERROR:", "You do not have the necessary permissions to use this command.")
 				return
 			} else if c.ModOnly && i.Member.Permissions < discordgo.PermissionManageRoles {
-				EphemeralResponse(s, i, 1, "ERROR:", "You do not have the proper permissions to use this command.")
+				disc.EphemeralResponse(s, i, disc.DiscRed, "ERROR:", "You do not have the necessary permissions to use this command.")
 				return
 			}
 			c.Command(s, i, g)
@@ -119,19 +114,4 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	}
 
-}
-
-func EphemeralResponse(s *discordgo.Session, i *discordgo.InteractionCreate, color int, title, message string) {
-	//cwlog.DoLog("EphemeralResponse:\n" + i.Member.User.Username + "\n" + title + "\n" + message)
-
-	var elist []*discordgo.MessageEmbed
-	elist = append(elist, &discordgo.MessageEmbed{Title: title, Description: message, Color: color})
-
-	//1 << 6 is ephemeral/private
-	respData := &discordgo.InteractionResponseData{Embeds: elist, Flags: 1 << 6}
-	resp := &discordgo.InteractionResponse{Type: discordgo.InteractionResponseChannelMessageWithSource, Data: respData}
-	err := s.InteractionRespond(i.Interaction, resp)
-	if err != nil {
-		cwlog.DoLog(err.Error())
-	}
 }

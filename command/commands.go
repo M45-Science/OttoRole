@@ -4,6 +4,7 @@ import (
 	"RoleKeeper/cwlog"
 	"RoleKeeper/db"
 	"RoleKeeper/disc"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -28,7 +29,7 @@ var cmds = []Command{
 
 func RoleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
 	if len(guild.Roles) <= 0 {
-		disc.EphemeralResponse(s, i, "ERROR:", "Sorry, there aren't any roles set up for this Discord guild right now!")
+		disc.EphemeralResponse(s, i, disc.DiscOrange, "ERROR:", "Sorry, there aren't any roles set up for this Discord guild right now!")
 		return
 	}
 	for _, role := range guild.Roles {
@@ -40,8 +41,34 @@ func AddRole(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.Gui
 	var availableRoles []discordgo.SelectMenuOption
 	roles := GetGuildRoles(s, i)
 	for _, role := range roles {
+		//Block specific names
+		if strings.EqualFold(role.Name, "@everyone") {
+			continue
+		}
+		//Block specific permissions
+		if role.Permissions&(discordgo.PermissionAdministrator|
+			discordgo.PermissionBanMembers|
+			discordgo.PermissionManageRoles|
+			discordgo.PermissionModerateMembers|
+			discordgo.PermissionManageWebhooks|
+			discordgo.PermissionManageServer) == 0 {
+			entry := discordgo.SelectMenuOption{
+				Emoji: discordgo.ComponentEmoji{
+					Name: "🚫",
+				},
+				Label: role.Name, Value: role.Name + "ignore"}
+			availableRoles = append(availableRoles, entry)
+			continue
+		}
+		//Dont add roles already in database
 		for _, existing := range guild.Roles {
 			if db.IntToID(existing.ID) == role.ID {
+				entry := discordgo.SelectMenuOption{
+					Emoji: discordgo.ComponentEmoji{
+						Name: "✅",
+					},
+					Label: role.Name, Value: role.Name + "ignore"}
+				availableRoles = append(availableRoles, entry)
 				continue
 			}
 		}
@@ -49,7 +76,7 @@ func AddRole(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.Gui
 		availableRoles = append(availableRoles, entry)
 	}
 	if len(availableRoles) <= 0 {
-		disc.EphemeralResponse(s, i, "Error:", "Sorry, there are no eligabile roles that can be added!")
+		disc.EphemeralResponse(s, i, disc.DiscRed, "Error:", "Sorry, there are no eligabile roles that can be added!")
 		return
 	}
 
@@ -57,7 +84,7 @@ func AddRole(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.Gui
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: "Add a role that normal users should be allowed to self-assign:",
-			Flags:   1 << 6,
+			Flags:   discordgo.MessageFlagsEphemeral,
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{
 					Components: []discordgo.MessageComponent{
