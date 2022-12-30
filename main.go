@@ -116,7 +116,6 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 	}
 
 	s.AddHandler(command.SlashCommand)
-	command.RegisterCommands(s)
 
 	disc.Session = s
 	disc.Ready = r
