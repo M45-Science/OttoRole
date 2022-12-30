@@ -39,7 +39,7 @@ func main() {
 	glob.ServerRunning = true
 	glob.DoRegisterCommands = flag.Bool("regCommands", false, "Register discord commands")
 	glob.DoDeregisterCommands = flag.Bool("deregCommands", false, "Deregister discord commands")
-	glob.TestMode = flag.Bool("testMode", false, "WILL OVER-WRITE CURRENT DB, AND GENERATE A FAKE ONE.")
+	glob.TestMode = flag.Bool("testMode", false, "WILL COMPLETELY OVER-WRITE CURRENT DB, AND GENERATE A FAKE TEST ONE.")
 	flag.Parse()
 
 	db.ThreadCount = runtime.NumCPU()
