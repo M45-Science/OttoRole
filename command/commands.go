@@ -8,6 +8,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+var modOnly int64 = discordgo.PermissionManageRoles
+
 var cmds = []Command{
 	{
 		AppCmd: &discordgo.ApplicationCommand{
@@ -18,12 +20,11 @@ var cmds = []Command{
 	},
 	{
 		AppCmd: &discordgo.ApplicationCommand{
-			Name:        "Add-role",
-			Description: "Add or remove roles to the list",
+			Name:                     "Add-role",
+			Description:              "Add or remove roles to the list",
+			DefaultMemberPermissions: &modOnly,
 		},
 		Command: AddRole,
-		DefaultMemberPermissions: discordgo.PermissionManageRoles.
-
 	},
 }
 
@@ -38,16 +39,4 @@ func RoleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db
 }
 
 func AddRole(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
-}
-
-func CheckAdmin(i *discordgo.InteractionCreate) bool {
-
-	if i.Member != nil {
-		for _, r := range i.Member.Roles {
-			if strings.EqualFold(r, cfg.Global.Discord.Roles.RoleCache.Admin) {
-				return true
-			}
-		}
-	}
-	return false
 }
