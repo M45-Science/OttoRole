@@ -36,8 +36,6 @@ func RoleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db
 	}
 }
 
-var maxPerms int64 = discordgo.PermissionManageRoles
-
 func AddRole(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
 	var availableRoles []discordgo.SelectMenuOption
 	roles := GetGuildRoles(s, i)
