@@ -16,6 +16,15 @@ var cmds = []Command{
 		},
 		Command: RoleCommand,
 	},
+	{
+		AppCmd: &discordgo.ApplicationCommand{
+			Name:        "Add-role",
+			Description: "Add or remove roles to the list",
+		},
+		Command: AddRole,
+		DefaultMemberPermissions: discordgo.PermissionManageRoles.
+
+	},
 }
 
 func RoleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
@@ -28,6 +37,17 @@ func RoleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db
 	}
 }
 
-func AddRole(s *discordgo.Session, i *discordgo.InteractionCreate, guid *db.GuildData) {
-	//Send list of roles
+func AddRole(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
+}
+
+func CheckAdmin(i *discordgo.InteractionCreate) bool {
+
+	if i.Member != nil {
+		for _, r := range i.Member.Roles {
+			if strings.EqualFold(r, cfg.Global.Discord.Roles.RoleCache.Admin) {
+				return true
+			}
+		}
+	}
+	return false
 }
