@@ -1,9 +1,8 @@
 package command
 
 import (
-	"RoleKeeper/cwlog"
-	"RoleKeeper/disc"
-	"fmt"
+	"RoleKeeper/cfg"
+	"RoleKeeper/db"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -18,7 +17,9 @@ var cmds = []Command{
 	},
 }
 
-func RoleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, guild *disc.GuildData) {
-	buf := fmt.Sprintf("LID: %v", guild.LID)
-	cwlog.DoLog(buf)
+func RoleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
+
+	if i.AppID == cfg.Config.App {
+		//
+	}
 }

@@ -5,6 +5,7 @@ import (
 	"RoleKeeper/command"
 	"RoleKeeper/cons"
 	"RoleKeeper/cwlog"
+	"RoleKeeper/db"
 	"RoleKeeper/disc"
 	"RoleKeeper/glob"
 	"flag"
@@ -41,9 +42,9 @@ func main() {
 	glob.TestMode = flag.Bool("testMode", false, "WILL OVER-WRITE CURRENT DB, AND GENERATE A FAKE ONE.")
 	flag.Parse()
 
-	disc.ThreadCount = runtime.NumCPU()
+	db.ThreadCount = runtime.NumCPU()
 	debug.SetMemoryLimit(1024 * 1024 * 1024 * 24) //24gb
-	debug.SetMaxThreads(disc.ThreadCount * 2)
+	debug.SetMaxThreads(db.ThreadCount * 2)
 
 	glob.Uptime = time.Now().UTC().Round(time.Second)
 	cwlog.StartLog()
@@ -121,23 +122,23 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 	disc.Ready = r
 	cwlog.DoLog("Discord bot ready")
 
-	disc.GuildLookup = make(map[uint64]*disc.GuildData, cons.TSize)
+	db.GuildLookup = make(map[uint64]*db.GuildData, cons.TSize)
 
 	if *glob.TestMode {
 		testDatabase()
-		disc.WriteAllCluster()
+		db.WriteAllCluster()
 		//disc.ReadAllClusters()
 	} else {
-		disc.ReadAllClusters()
+		db.ReadAllClusters()
 		//disc.WriteAllCluster()
 	}
-	disc.UpdateGuildLookup()
+	db.UpdateGuildLookup()
 
 	if *glob.DoDeregisterCommands {
 		command.RegisterCommands(s)
 	}
 
-	disc.MainLoop()
+	MainLoop()
 }
 
 func testDatabase() {
@@ -157,15 +158,15 @@ func testDatabase() {
 
 	cwlog.DoLog("Making test database...")
 
-	tNow := disc.NowToCompact()
+	tNow := db.NowToCompact()
 	for x := 0; x < cons.TSize; x++ {
 
 		//Make guild
-		newGuild := disc.GuildData{LID: uint32(x), Customer: rand.Uint64(), Guild: rand.Uint64(), Added: uint32(tNow), Modified: uint32(tNow), Donator: 0}
-		disc.Database[x] = &newGuild
+		newGuild := db.GuildData{LID: uint32(x), Customer: rand.Uint64(), Guild: rand.Uint64(), Added: uint32(tNow), Modified: uint32(tNow), Donator: 0}
+		db.Database[x] = &newGuild
 	}
-	disc.LID_TOP = cons.TSize
+	db.LID_TOP = cons.TSize
 
-	buf := fmt.Sprintf("Guilds: %v", disc.LID_TOP)
+	buf := fmt.Sprintf("Guilds: %v", db.LID_TOP)
 	cwlog.DoLog(buf)
 }

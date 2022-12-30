@@ -3,6 +3,7 @@ package command
 import (
 	"RoleKeeper/cfg"
 	"RoleKeeper/cwlog"
+	"RoleKeeper/db"
 	"RoleKeeper/disc"
 	"RoleKeeper/glob"
 	"fmt"
@@ -11,7 +12,7 @@ import (
 )
 
 type Command struct {
-	Command func(s *discordgo.Session, i *discordgo.InteractionCreate, guild *disc.GuildData)
+	Command func(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData)
 	AppCmd  *discordgo.ApplicationCommand
 
 	AdminOnly bool
@@ -62,7 +63,7 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	g := disc.GuildLookupReadString(i.GuildID)
+	g := db.GuildLookupReadString(i.GuildID)
 	/* Ignore guilds not in our DB */
 	if g == nil {
 		EphemeralResponse(s, i, 0xFF0000, "Error:", "Sorry, this guild isn't registered yet!")
@@ -71,9 +72,9 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		cwlog.DoLog(buf)
 
 		/* Add to db */
-		gid, err := disc.GuildStrToInt(i.GuildID)
+		gid, err := db.GuildStrToInt(i.GuildID)
 		if err == nil {
-			disc.AddGuild(gid)
+			db.AddGuild(gid)
 		} else {
 			cwlog.DoLog(fmt.Sprintf("Failed to parse guildid: %v", i.GuildID))
 		}

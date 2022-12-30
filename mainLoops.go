@@ -1,4 +1,4 @@
-package disc
+package main
 
 import (
 	"RoleKeeper/cwlog"
