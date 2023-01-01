@@ -101,7 +101,7 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 					return
 				}
 
-				disc.EphemeralResponse(s, i, disc.DiscGreen, "Status:", "Working...")
+				disc.EphemeralResponse(s, i, disc.DiscPurple, "Status:", "Working...")
 
 				found := -1
 				for rpos, role := range guild.Roles {

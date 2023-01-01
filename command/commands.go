@@ -46,7 +46,7 @@ func RoleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db
 
 func AddRole(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
 
-	disc.EphemeralResponse(s, i, disc.DiscCyan, "Status:", "Finding eligible roles.")
+	disc.EphemeralResponse(s, i, disc.DiscPurple, "Status:", "Finding eligible roles.")
 
 	var availableRoles []discordgo.SelectMenuOption
 	roles := disc.GetGuildRoles(s, i.GuildID)
