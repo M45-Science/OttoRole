@@ -21,8 +21,8 @@ import (
 )
 
 type RoleData struct {
-	Name string
-	ID   uint64
+	Name string `json:"n,omitempty"`
+	ID   uint64 `json:"i"`
 }
 
 type GuildData struct {
@@ -74,26 +74,34 @@ func LookupRoleNames(s *discordgo.Session, guildData *GuildData) {
 
 	//Process all guilds
 	if guildData == nil {
-		for _, guild := range GuildLookup {
-			for _, role := range guild.Roles {
+		for gpos, guild := range GuildLookup {
+			guild.Lock.Lock()
+
+			for rpos, role := range guild.Roles {
 				if role.Name == "" {
 					roleList := disc.GetGuildRoles(s, IntToSnowflake(guild.Guild))
 					for _, discRole := range roleList {
 						discRoleID, err := SnowflakeToInt(discRole.ID)
 						if err == nil {
 							if role.ID == discRoleID {
-								role.Name = discRole.Name
-								count++
+								if discRole.Name != "" {
+
+									GuildLookup[gpos].Roles[rpos].Name = discRole.Name
+									count++
+								}
 							}
 						}
 					}
 				}
 			}
+
+			guild.Lock.Unlock()
 		}
 		buf := fmt.Sprintf("Added %v role names in %v.", count, time.Since(startTime).String())
 		cwlog.DoLog(buf)
 	} else { //Process a specific guild
 
+		guildData.Lock.Lock()
 		for rpos, role := range guildData.Roles {
 			discGuild, err := s.Guild(IntToSnowflake(guildData.Guild))
 			if err == nil {
@@ -104,6 +112,7 @@ func LookupRoleNames(s *discordgo.Session, guildData *GuildData) {
 				}
 			}
 		}
+		guildData.Lock.Lock()
 	}
 }
 
@@ -178,6 +187,8 @@ func WriteCluster(i int) {
 		b += 8
 		binary.LittleEndian.PutUint32(buf[b:], g.Added)
 		b += 4
+		buf[b] = g.Donator
+		b += 1
 
 		numRoles := uint16(len(g.Roles))
 		binary.LittleEndian.PutUint16(buf[b:], numRoles)
@@ -240,8 +251,8 @@ func ReadCluster(i int64) {
 	dataLen := int64(len(data))
 	var b int64
 
-	if dataLen < VERSION_size+staticSize {
-		fmt.Println("cluster size too small")
+	if (dataLen) < VERSION_size+staticSize {
+		fmt.Println("cluster size too small:", dataLen, " bytes of ", VERSION_size+staticSize)
 		return
 	}
 
@@ -268,10 +279,8 @@ func ReadCluster(i int64) {
 					cwlog.DoLog("LID larger than maxguild.")
 					continue
 				}
-				if g.LID > LID_TOP {
-					LID_TOP = g.LID
-				}
-				Database[g.LID] = g
+				LID_TOP++
+				Database[LID_TOP] = g
 				break
 				/* Found a role instead of record end */
 			} else {
@@ -283,6 +292,8 @@ func ReadCluster(i int64) {
 					roleData = append(roleData, RoleData{ID: roleID})
 				}
 				g.Roles = roleData
+				LID_TOP++
+				Database[LID_TOP] = g
 				break
 			}
 		}

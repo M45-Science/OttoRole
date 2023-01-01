@@ -125,9 +125,9 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 					guild.Lock.Unlock()
 
 					disc.EphemeralResponse(s, i, disc.DiscGreen, "Status:", "Role added.")
-					//Get names
-					db.LookupRoleNames(s, guild)
 					db.WriteAllCluster()
+					db.DumpGuilds()
+					db.LookupRoleNames(s, guild)
 					break
 				}
 
