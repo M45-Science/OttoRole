@@ -116,7 +116,6 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 	}
 
 	s.AddHandler(command.SlashCommand)
-	command.RegisterCommands(s)
 
 	disc.Session = s
 	disc.Ready = r
@@ -133,12 +132,17 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 		//disc.WriteAllCluster()
 	}
 	db.UpdateGuildLookup()
+	go db.LookupRoleNames(s, nil)
 
 	if *glob.DoDeregisterCommands {
 		command.RegisterCommands(s)
 	}
+	if *glob.DoDeregisterCommands {
+		command.ClearCommands()
+	}
 
-	MainLoop()
+	go MainLoop()
+
 }
 
 func testDatabase() {

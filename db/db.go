@@ -3,6 +3,7 @@ package db
 import (
 	"RoleKeeper/cons"
 	"RoleKeeper/cwlog"
+	"RoleKeeper/disc"
 	"bytes"
 	"compress/zlib"
 	"encoding/binary"
@@ -15,27 +16,27 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/remeh/sizedwaitgroup"
 )
 
 type RoleData struct {
-	Name string
-	ID   uint64
+	Name string `json:"n,omitempty"`
+	ID   uint64 `json:"i"`
 }
 
 type GuildData struct {
 	//Name type bytes
-	LID      uint32 `json:"l,omitempty"` //4
-	Customer uint64 `json:"c,omitempty"` //8
-	Guild    uint64 `json:"-"`           //8 --Already in JSON as KEY
-	Added    uint32 `json:"a,omitempty"` //4
-	Modified uint32 `json:"m,omitempty"` //4
-
-	Donator uint8 `json:"d,omitempty"` //1
+	LID      uint32     `json:"l,omitempty"`
+	Customer uint64     `json:"c,omitempty"`
+	Guild    uint64     `json:"-"` //Already in JSON as KEY
+	Added    uint32     `json:"a,omitempty"`
+	Modified uint32     `json:"m,omitempty"`
+	Donator  uint8      `json:"d,omitempty"`
+	Roles    []RoleData `json:"r,omitempty"`
 
 	/* Not on disk */
-	Roles []RoleData   `json:"-"`
-	Lock  sync.RWMutex `json:"-"`
+	Lock sync.RWMutex `json:"-"`
 }
 
 var (
@@ -47,9 +48,13 @@ var (
 	Database [cons.MaxGuilds]*GuildData
 )
 
-func IntToID(id uint64) string {
+func IntToSnowflake(id uint64) string {
 	strId := fmt.Sprintf("%v", id)
 	return strId
+}
+
+func SnowflakeToInt(i string) (uint64, error) {
+	return strconv.ParseUint(i, 10, 64)
 }
 
 func compressZip(data []byte) []byte {
@@ -61,6 +66,54 @@ func compressZip(data []byte) []byte {
 	w.Write(data)
 	w.Close()
 	return b.Bytes()
+}
+
+func LookupRoleNames(s *discordgo.Session, guildData *GuildData) {
+	startTime := time.Now()
+	count := 0
+
+	//Process all guilds
+	if guildData == nil {
+		for gpos, guild := range GuildLookup {
+			guild.Lock.Lock()
+
+			for rpos, role := range guild.Roles {
+				if role.Name == "" {
+					roleList := disc.GetGuildRoles(s, IntToSnowflake(guild.Guild))
+					for _, discRole := range roleList {
+						discRoleID, err := SnowflakeToInt(discRole.ID)
+						if err == nil {
+							if role.ID == discRoleID {
+								if discRole.Name != "" {
+
+									GuildLookup[gpos].Roles[rpos].Name = discRole.Name
+									count++
+								}
+							}
+						}
+					}
+				}
+			}
+
+			guild.Lock.Unlock()
+		}
+		buf := fmt.Sprintf("Added %v role names in %v.", count, time.Since(startTime).String())
+		cwlog.DoLog(buf)
+	} else { //Process a specific guild
+
+		guildData.Lock.Lock()
+		for rpos, role := range guildData.Roles {
+			discGuild, err := s.Guild(IntToSnowflake(guildData.Guild))
+			if err == nil {
+				for _, discRole := range discGuild.Roles {
+					if IntToSnowflake(role.ID) == discRole.ID {
+						guildData.Roles[rpos].Name = discRole.Name
+					}
+				}
+			}
+		}
+		guildData.Lock.Unlock()
+	}
 }
 
 func WriteLIDTop() {
@@ -91,12 +144,29 @@ func WriteAllCluster() {
 
 }
 
-// Size of all fields, sans version header
-const v1RecordSize = 19
+const VERSION_size = 2
+
+const LID_size = 4
+const SNOWFLAKE_size = 8
+const ADDED_size = 4
+const DONOR_size = 1
+const NUMROLE_size = 2
+
+const MAXROLES = 0xFFFF
+const MAXROLE_size = SNOWFLAKE_size * MAXROLES
+
+const staticSize = LID_size +
+	SNOWFLAKE_size +
+	ADDED_size +
+	DONOR_size +
+	NUMROLE_size
+
+const clusterSize = (VERSION_size + ((staticSize + MAXROLE_size) * (cons.MaxGuilds / cons.NumClusters)))
 
 func WriteCluster(i int) {
 
-	var buf [(v1RecordSize * (cons.MaxGuilds / cons.NumClusters)) + 2]byte
+	var buf [clusterSize]byte
+
 	var b int64
 	binary.LittleEndian.PutUint16(buf[b:], 1) //version number
 	b += 2
@@ -119,13 +189,22 @@ func WriteCluster(i int) {
 		b += 4
 		buf[b] = g.Donator
 		b += 1
-		buf[b] = cons.RecordEnd
-		b += 1
+
+		numRoles := uint16(len(g.Roles))
+		binary.LittleEndian.PutUint16(buf[b:], numRoles)
+		b += 2
+
+		for c, role := range g.Roles {
+			if c < MAXROLES {
+				binary.LittleEndian.PutUint64(buf[b:], role.ID)
+				b += 8
+			}
+		}
 
 		Database[x].Lock.RUnlock()
 	}
 	/* Don't write empty files */
-	if b > 2 {
+	if b > VERSION_size {
 		name := fmt.Sprintf("data/db/cluster-%v.dat", i+1)
 		err := os.WriteFile(name+".tmp", buf[0:b], 0644)
 		if err != nil && err != fs.ErrNotExist {
@@ -172,6 +251,11 @@ func ReadCluster(i int64) {
 	dataLen := int64(len(data))
 	var b int64
 
+	if (dataLen) < VERSION_size+staticSize {
+		fmt.Println("cluster size too small:", dataLen, " bytes of ", VERSION_size+staticSize)
+		return
+	}
+
 	version := binary.LittleEndian.Uint16(data[b:])
 	b += 2
 	if version == 1 {
@@ -186,22 +270,31 @@ func ReadCluster(i int64) {
 			b += 4
 			g.Donator = data[b]
 			b += 1
-			end := data[b]
-			b += 1
 
-			if end == cons.RecordEnd {
+			numRoles := binary.LittleEndian.Uint16(data[b:])
+			b += 2
+
+			if numRoles == 0 {
 				if g.LID >= cons.MaxGuilds {
 					cwlog.DoLog("LID larger than maxguild.")
 					continue
 				}
-				if g.LID > LID_TOP {
-					LID_TOP = g.LID
-				}
-				Database[g.LID] = g
+				LID_TOP++
+				Database[LID_TOP] = g
+				break
+				/* Found a role instead of record end */
 			} else {
-				buf := fmt.Sprintf("ReadCluster: %v: %v: INVALID RECORD!", name, g.LID)
-				cwlog.DoLog(buf)
-				return
+				roleData := []RoleData{}
+				for i := uint16(1); i <= numRoles; i++ {
+					roleID := binary.LittleEndian.Uint64(data[b:])
+					b += 8
+
+					roleData = append(roleData, RoleData{ID: roleID})
+				}
+				g.Roles = roleData
+				LID_TOP++
+				Database[LID_TOP] = g
+				break
 			}
 		}
 	} else {
@@ -210,7 +303,7 @@ func ReadCluster(i int64) {
 	}
 
 	endTime := time.Now()
-	if b > 2 && 1 == 2 {
+	if b > 2 {
 		cwlog.DoLog("Cluster-" + strconv.FormatInt(int64(i+1), 10) + " read, took: " + endTime.Sub(startTime).String() + ", Read: " + strconv.FormatInt(b, 10) + "b")
 	}
 }
@@ -244,17 +337,13 @@ func GuildLookupRead(i uint64) *GuildData {
 
 func GuildLookupReadString(i string) *GuildData {
 	GuildLookupLock.RLock()
-	val, err := GuildStrToInt(i)
+	val, err := SnowflakeToInt(i)
 	if err == nil {
 		g := GuildLookup[val]
 		return g
 	}
 	GuildLookupLock.RUnlock()
 	return nil
-}
-
-func GuildStrToInt(i string) (uint64, error) {
-	return strconv.ParseUint(i, 10, 64)
 }
 
 func AddGuild(guildid uint64) {

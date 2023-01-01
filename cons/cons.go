@@ -1,7 +1,7 @@
 package cons
 
 const (
-	Version            = "001-09192022"
+	Version            = "001-12312022-0534p"
 	BotName            = "RoleKeeper"
 	DumpName           = "db-dump.json"
 	ClusterPrefix      = "cluster-"
@@ -17,8 +17,6 @@ const (
 	/* 32bit records will roll over at */
 	/* GMT: Wednesday, March 16, 2242 12:56:32 PM */
 	/* So we need to remember to upgrade this in 220 years ;) */
-
-	RecordEnd = 0x21
 
 	//Test only
 	TSize = 134
