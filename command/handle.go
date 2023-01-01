@@ -78,9 +78,15 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if i.Type == discordgo.InteractionMessageComponent {
 		data := i.MessageComponentData()
 
-		for _, c := range data.Values {
-			if strings.EqualFold(data.CustomID, "AddRole") {
+		if strings.EqualFold(data.CustomID, "AddRole") {
+			if i.Member.Permissions 
+			for _, c := range data.Values {
 				//TODO: Check IDs and permissions
+
+				if strings.HasSuffix(c, "-ignore") {
+					disc.EphemeralResponse(s, i, disc.DiscRed, "ERROR:", "This role has moderatator permissions.\nLetting normal users self-assign a moderator role would be unadvisable.")
+					return
+				}
 
 				guild := db.GuildLookupReadString(i.GuildID)
 				if guild == nil {
@@ -95,17 +101,22 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 					return
 				}
 
-				found := false
-				for _, role := range guild.Roles {
+				found := -1
+				for rpos, role := range guild.Roles {
 					if role.ID == roleid {
-						//Already in DB, ignore
-						found = true
+						//Already in DB, remove
+						found = rpos
 						break
 					}
 				}
 
-				if found {
-					disc.EphemeralResponse(s, i, disc.DiscRed, "ERROR:", "That role is already in the list.")
+				if found != -1 {
+					guild.Lock.Lock()
+					guild.Roles = append(guild.Roles[:found], guild.Roles[found+1:]...)
+					guild.Lock.Unlock()
+					db.WriteAllCluster()
+					db.DumpGuilds()
+					disc.EphemeralResponse(s, i, disc.DiscRed, "Status:", "Role removed from the list.")
 					return
 				}
 
