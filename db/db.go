@@ -220,7 +220,7 @@ func ReadCluster(i int64) {
 
 			numRoles := int(data[b])
 
-			if numRoles == cons.RecordEnd {
+			if numRoles == 0 {
 				if g.LID >= cons.MaxGuilds {
 					cwlog.DoLog("LID larger than maxguild.")
 					continue
@@ -233,7 +233,7 @@ func ReadCluster(i int64) {
 				/* Found a role instead of record end */
 			} else {
 				roleData := []RoleData{}
-				for i := 1; i < numRoles; i++ {
+				for i := 1; i <= numRoles; i++ {
 					roleID := binary.LittleEndian.Uint64(data[b:])
 					b += 8
 
@@ -249,7 +249,7 @@ func ReadCluster(i int64) {
 	}
 
 	endTime := time.Now()
-	if b > 2 && 1 == 2 {
+	if b > 2 {
 		cwlog.DoLog("Cluster-" + strconv.FormatInt(int64(i+1), 10) + " read, took: " + endTime.Sub(startTime).String() + ", Read: " + strconv.FormatInt(b, 10) + "b")
 	}
 }
@@ -283,7 +283,7 @@ func GuildLookupRead(i uint64) *GuildData {
 
 func GuildLookupReadString(i string) *GuildData {
 	GuildLookupLock.RLock()
-	val, err := GuildStrToInt(i)
+	val, err := SnowflakeToInt(i)
 	if err == nil {
 		g := GuildLookup[val]
 		return g
@@ -292,7 +292,7 @@ func GuildLookupReadString(i string) *GuildData {
 	return nil
 }
 
-func GuildStrToInt(i string) (uint64, error) {
+func SnowflakeToInt(i string) (uint64, error) {
 	return strconv.ParseUint(i, 10, 64)
 }
 

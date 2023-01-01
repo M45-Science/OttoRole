@@ -7,6 +7,7 @@ import (
 	"RoleKeeper/disc"
 	"RoleKeeper/glob"
 	"fmt"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -74,15 +75,76 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	/* App commands only */
-	if i.Type != discordgo.InteractionApplicationCommand {
+	if i.Type == discordgo.InteractionMessageComponent {
+		data := i.MessageComponentData()
+
+		for _, c := range data.Values {
+			if strings.EqualFold(data.CustomID, "AddRole") {
+				//TODO: Check IDs and permissions
+
+				guild := db.GuildLookupReadString(i.GuildID)
+				if guild == nil {
+					disc.EphemeralResponse(s, i, disc.DiscRed, "ERROR:", "This Discord guild is not in our database.")
+					return
+				}
+
+				roleid, err := db.SnowflakeToInt(c)
+
+				if err != nil {
+					disc.EphemeralResponse(s, i, disc.DiscRed, "ERROR:", "Internal Error: The menu selection had invalid data.")
+					return
+				}
+
+				found := false
+				for _, role := range guild.Roles {
+					if role.ID == roleid {
+						//Already in DB, ignore
+						found = true
+						break
+					}
+				}
+
+				if found {
+					disc.EphemeralResponse(s, i, disc.DiscRed, "ERROR:", "That role is already in the list.")
+					return
+				}
+
+				nguild, err := s.Guild(i.GuildID)
+				if err != nil {
+					disc.EphemeralResponse(s, i, disc.DiscRed, "ERROR:", "Internal Error: Unable to lookup this Discord guild.")
+					break
+				}
+
+				numRoles := len(guild.Roles)
+				if numRoles < 0xFF {
+
+					for _, roleLookup := range nguild.Roles {
+						if roleLookup.ID == db.IntToID(roleid) {
+							newRole := db.RoleData{Name: roleLookup.Name, ID: roleid}
+
+							guild.Lock.Lock()
+							guild.Roles = append(guild.Roles, newRole)
+							guild.Modified = db.NowToCompact()
+							guild.Lock.Unlock()
+							db.WriteAllCluster()
+
+							disc.EphemeralResponse(s, i, disc.DiscGreen, "Status:", "Role added.")
+							break
+						}
+					}
+				}
+
+			}
+		}
+		return
+	} else if i.Type != discordgo.InteractionApplicationCommand {
 		return
 	}
 
 	g := db.GuildLookupReadString(i.GuildID)
 	if g == nil {
 		/* Add to db */
-		gid, err := db.GuildStrToInt(i.GuildID)
+		gid, err := db.SnowflakeToInt(i.GuildID)
 		if err == nil {
 			db.AddGuild(gid)
 		} else {

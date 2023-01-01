@@ -72,7 +72,7 @@ func AddRole(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.Gui
 				continue
 			}
 		}
-		entry := discordgo.SelectMenuOption{Label: role.Name, Value: role.Name}
+		entry := discordgo.SelectMenuOption{Label: role.Name, Value: role.ID}
 		availableRoles = append(availableRoles, entry)
 	}
 	if len(availableRoles) <= 0 {
