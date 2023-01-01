@@ -28,18 +28,26 @@ var cmds = []Command{
 }
 
 func RoleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
-	if len(guild.Roles) <= 0 {
+	if len(guild.Roles) == 0 {
 		disc.EphemeralResponse(s, i, disc.DiscOrange, "ERROR:", "Sorry, there aren't any roles set up for this Discord guild right now!")
 		return
 	}
-	for _, role := range guild.Roles {
-		cwlog.DoLog(role.Name + "\n")
+	buf := ""
+	for c, role := range guild.Roles {
+		if c > 0 {
+			buf = buf + ", "
+		}
+		if role.Name == "" {
+			buf = buf + db.IntToSnowflake(role.ID)
+		}
+		buf = buf + role.Name
 	}
+	disc.EphemeralResponse(s, i, disc.DiscOrange, "Test:", "```"+buf+"```")
 }
 
 func AddRole(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
 	var availableRoles []discordgo.SelectMenuOption
-	roles := GetGuildRoles(s, i)
+	roles := disc.GetGuildRoles(s, i.GuildID)
 	for _, role := range roles {
 		//Block specific names
 		if strings.EqualFold(role.Name, "@everyone") {
@@ -62,7 +70,7 @@ func AddRole(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.Gui
 		}
 		//Dont add roles already in database
 		for _, existing := range guild.Roles {
-			if db.IntToID(existing.ID) == role.ID {
+			if db.IntToSnowflake(existing.ID) == role.ID {
 				entry := discordgo.SelectMenuOption{
 					Emoji: discordgo.ComponentEmoji{
 						Name: "✅",
@@ -104,12 +112,4 @@ func AddRole(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.Gui
 	if err != nil {
 		cwlog.DoLog(err.Error())
 	}
-}
-
-func GetGuildRoles(s *discordgo.Session, i *discordgo.InteractionCreate) []*discordgo.Role {
-	guild, err := s.Guild(i.GuildID)
-	if guild != nil && err == nil {
-		return guild.Roles
-	}
-	return nil
 }

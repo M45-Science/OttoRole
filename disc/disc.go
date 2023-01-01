@@ -20,6 +20,14 @@ const (
 	DiscPurple = 0xFF00FF
 )
 
+func GetGuildRoles(s *discordgo.Session, guildid string) []*discordgo.Role {
+	guild, err := s.Guild(guildid)
+	if guild != nil && err == nil {
+		return guild.Roles
+	}
+	return nil
+}
+
 func InteractionResponse(s *discordgo.Session, i *discordgo.InteractionCreate, embed *discordgo.MessageEmbed) {
 	cwlog.DoLog("InteractionResponse:\n" + i.Member.User.Username + "\n" + embed.Title + "\n" + embed.Description)
 

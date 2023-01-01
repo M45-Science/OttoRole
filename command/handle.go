@@ -109,29 +109,26 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 					return
 				}
 
-				nguild, err := s.Guild(i.GuildID)
 				if err != nil {
 					disc.EphemeralResponse(s, i, disc.DiscRed, "ERROR:", "Internal Error: Unable to lookup this Discord guild.")
 					break
 				}
 
 				numRoles := len(guild.Roles)
-				if numRoles < 0xFF {
+				if numRoles < db.MAXROLES {
 
-					for _, roleLookup := range nguild.Roles {
-						if roleLookup.ID == db.IntToID(roleid) {
-							newRole := db.RoleData{Name: roleLookup.Name, ID: roleid}
+					newRole := db.RoleData{ID: roleid}
 
-							guild.Lock.Lock()
-							guild.Roles = append(guild.Roles, newRole)
-							guild.Modified = db.NowToCompact()
-							guild.Lock.Unlock()
-							db.WriteAllCluster()
+					guild.Lock.Lock()
+					guild.Roles = append(guild.Roles, newRole)
+					guild.Modified = db.NowToCompact()
+					guild.Lock.Unlock()
 
-							disc.EphemeralResponse(s, i, disc.DiscGreen, "Status:", "Role added.")
-							break
-						}
-					}
+					disc.EphemeralResponse(s, i, disc.DiscGreen, "Status:", "Role added.")
+					//Get names
+					db.LookupRoleNames(s, guild)
+					db.WriteAllCluster()
+					break
 				}
 
 			}

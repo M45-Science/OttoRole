@@ -132,6 +132,7 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 		//disc.WriteAllCluster()
 	}
 	db.UpdateGuildLookup()
+	db.LookupRoleNames(s, nil)
 
 	if *glob.DoDeregisterCommands {
 		command.RegisterCommands(s)

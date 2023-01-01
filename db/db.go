@@ -3,6 +3,7 @@ package db
 import (
 	"RoleKeeper/cons"
 	"RoleKeeper/cwlog"
+	"RoleKeeper/disc"
 	"bytes"
 	"compress/zlib"
 	"encoding/binary"
@@ -15,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/remeh/sizedwaitgroup"
 )
 
@@ -25,17 +27,16 @@ type RoleData struct {
 
 type GuildData struct {
 	//Name type bytes
-	LID      uint32 `json:"l,omitempty"` //4
-	Customer uint64 `json:"c,omitempty"` //8
-	Guild    uint64 `json:"-"`           //8 --Already in JSON as KEY
-	Added    uint32 `json:"a,omitempty"` //4
-	Modified uint32 `json:"m,omitempty"` //4
-
-	Donator uint8 `json:"d,omitempty"` //1
+	LID      uint32     `json:"l,omitempty"`
+	Customer uint64     `json:"c,omitempty"`
+	Guild    uint64     `json:"-"` //Already in JSON as KEY
+	Added    uint32     `json:"a,omitempty"`
+	Modified uint32     `json:"m,omitempty"`
+	Donator  uint8      `json:"d,omitempty"`
+	Roles    []RoleData `json:"r,omitempty"`
 
 	/* Not on disk */
-	Roles []RoleData   `json:"-"`
-	Lock  sync.RWMutex `json:"-"`
+	Lock sync.RWMutex `json:"-"`
 }
 
 var (
@@ -47,9 +48,13 @@ var (
 	Database [cons.MaxGuilds]*GuildData
 )
 
-func IntToID(id uint64) string {
+func IntToSnowflake(id uint64) string {
 	strId := fmt.Sprintf("%v", id)
 	return strId
+}
+
+func SnowflakeToInt(i string) (uint64, error) {
+	return strconv.ParseUint(i, 10, 64)
 }
 
 func compressZip(data []byte) []byte {
@@ -61,6 +66,45 @@ func compressZip(data []byte) []byte {
 	w.Write(data)
 	w.Close()
 	return b.Bytes()
+}
+
+func LookupRoleNames(s *discordgo.Session, guildData *GuildData) {
+	startTime := time.Now()
+	count := 0
+
+	//Process all guilds
+	if guildData == nil {
+		for _, guild := range GuildLookup {
+			for _, role := range guild.Roles {
+				if role.Name == "" {
+					roleList := disc.GetGuildRoles(s, IntToSnowflake(guild.Guild))
+					for _, discRole := range roleList {
+						discRoleID, err := SnowflakeToInt(discRole.ID)
+						if err == nil {
+							if role.ID == discRoleID {
+								role.Name = discRole.Name
+								count++
+							}
+						}
+					}
+				}
+			}
+		}
+		buf := fmt.Sprintf("Added %v role names in %v.", count, time.Since(startTime).String())
+		cwlog.DoLog(buf)
+	} else { //Process a specific guild
+
+		for rpos, role := range guildData.Roles {
+			discGuild, err := s.Guild(IntToSnowflake(guildData.Guild))
+			if err == nil {
+				for _, discRole := range discGuild.Roles {
+					if IntToSnowflake(role.ID) == discRole.ID {
+						guildData.Roles[rpos].Name = discRole.Name
+					}
+				}
+			}
+		}
+	}
 }
 
 func WriteLIDTop() {
@@ -97,10 +141,10 @@ const LID_size = 4
 const SNOWFLAKE_size = 8
 const ADDED_size = 4
 const DONOR_size = 1
-const NUMROLE_size = 1
+const NUMROLE_size = 2
 
-const MAXROLES = (NUMROLE_size * 0xFF)
-const MAXROLE_SIZE = SNOWFLAKE_size * MAXROLES
+const MAXROLES = 0xFFFF
+const MAXROLE_size = SNOWFLAKE_size * MAXROLES
 
 const staticSize = LID_size +
 	SNOWFLAKE_size +
@@ -108,7 +152,7 @@ const staticSize = LID_size +
 	DONOR_size +
 	NUMROLE_size
 
-const clusterSize = (VERSION_size + ((staticSize + MAXROLE_SIZE) * (cons.MaxGuilds / cons.NumClusters)))
+const clusterSize = (VERSION_size + ((staticSize + MAXROLE_size) * (cons.MaxGuilds / cons.NumClusters)))
 
 func WriteCluster(i int) {
 
@@ -134,12 +178,10 @@ func WriteCluster(i int) {
 		b += 8
 		binary.LittleEndian.PutUint32(buf[b:], g.Added)
 		b += 4
-		buf[b] = g.Donator
-		b += 1
 
 		numRoles := uint16(len(g.Roles))
-		buf[b] = byte(numRoles)
-		b += 1
+		binary.LittleEndian.PutUint16(buf[b:], numRoles)
+		b += 2
 
 		for c, role := range g.Roles {
 			if c < MAXROLES {
@@ -218,7 +260,8 @@ func ReadCluster(i int64) {
 			g.Donator = data[b]
 			b += 1
 
-			numRoles := int(data[b])
+			numRoles := binary.LittleEndian.Uint16(data[b:])
+			b += 2
 
 			if numRoles == 0 {
 				if g.LID >= cons.MaxGuilds {
@@ -233,7 +276,7 @@ func ReadCluster(i int64) {
 				/* Found a role instead of record end */
 			} else {
 				roleData := []RoleData{}
-				for i := 1; i <= numRoles; i++ {
+				for i := uint16(1); i <= numRoles; i++ {
 					roleID := binary.LittleEndian.Uint64(data[b:])
 					b += 8
 
@@ -290,10 +333,6 @@ func GuildLookupReadString(i string) *GuildData {
 	}
 	GuildLookupLock.RUnlock()
 	return nil
-}
-
-func SnowflakeToInt(i string) (uint64, error) {
-	return strconv.ParseUint(i, 10, 64)
 }
 
 func AddGuild(guildid uint64) {
