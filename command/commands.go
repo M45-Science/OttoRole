@@ -14,19 +14,19 @@ var cmds = []Command{
 			Name:        "roles",
 			Description: "Add or Remove roles to yourself, for groups and notifcations!",
 		},
-		Command: RoleCommand,
+		Command: Roles,
 	},
 	{
 		AppCmd: &discordgo.ApplicationCommand{
 			Name:        "config-roles",
 			Description: "Add or remove roles to the list",
 		},
-		Command: AddRole,
+		Command: ConfigRoles,
 		ModOnly: true,
 	},
 }
 
-func RoleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
+func Roles(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
 	if len(guild.Roles) == 0 {
 		disc.EphemeralResponse(s, i, disc.DiscOrange, "ERROR:", "Sorry, there aren't any roles set up for this Discord guild right now!")
 		return
@@ -44,7 +44,7 @@ func RoleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db
 	disc.EphemeralResponse(s, i, disc.DiscOrange, "Test:", "```"+buf+"```")
 }
 
-func AddRole(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
+func ConfigRoles(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
 
 	disc.EphemeralResponse(s, i, disc.DiscPurple, "Status:", "Finding eligible roles.")
 

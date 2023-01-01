@@ -10,7 +10,6 @@ import (
 	"RoleKeeper/glob"
 	"flag"
 	"fmt"
-	"math/rand"
 	"os"
 	"os/signal"
 	"runtime"
@@ -39,7 +38,6 @@ func main() {
 	glob.ServerRunning = true
 	glob.DoRegisterCommands = flag.Bool("regCommands", false, "Register discord commands")
 	glob.DoDeregisterCommands = flag.Bool("deregCommands", false, "Deregister discord commands")
-	glob.TestMode = flag.Bool("testMode", false, "WILL COMPLETELY OVER-WRITE CURRENT DB, AND GENERATE A FAKE TEST ONE.")
 	flag.Parse()
 
 	db.ThreadCount = runtime.NumCPU()
@@ -123,18 +121,11 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 
 	db.GuildLookup = make(map[uint64]*db.GuildData, cons.TSize)
 
-	if *glob.TestMode {
-		testDatabase()
-		db.WriteAllCluster()
-		//disc.ReadAllClusters()
-	} else {
-		db.ReadAllClusters()
-		//disc.WriteAllCluster()
-	}
+	db.ReadAllClusters()
 	db.UpdateGuildLookup()
 	go db.LookupRoleNames(s, nil)
 
-	if *glob.DoDeregisterCommands {
+	if *glob.DoRegisterCommands {
 		command.RegisterCommands(s)
 	}
 	if *glob.DoDeregisterCommands {
@@ -143,34 +134,4 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 
 	go MainLoop()
 
-}
-
-func testDatabase() {
-	os.RemoveAll("data/db")
-	/* Make data directory */
-	errr := os.MkdirAll("data", os.ModePerm)
-	if errr != nil {
-		fmt.Print(errr.Error())
-		return
-	}
-	/* Make log directory */
-	errr = os.MkdirAll("data/db", os.ModePerm)
-	if errr != nil {
-		fmt.Print(errr.Error())
-		return
-	}
-
-	cwlog.DoLog("Making test database...")
-
-	tNow := db.NowToCompact()
-	for x := 0; x < cons.TSize; x++ {
-
-		//Make guild
-		newGuild := db.GuildData{LID: uint32(x), Customer: rand.Uint64(), Guild: rand.Uint64(), Added: uint32(tNow), Modified: uint32(tNow), Donator: 0}
-		db.Database[x] = &newGuild
-	}
-	db.LID_TOP = cons.TSize
-
-	buf := fmt.Sprintf("Guilds: %v", db.LID_TOP)
-	cwlog.DoLog(buf)
 }
