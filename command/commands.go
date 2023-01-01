@@ -107,7 +107,7 @@ func ConfigRoles(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db
 				Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
 						// Select menu, as other components, must have a customID, so we set it to this value.
-						CustomID:    "AddRole",
+						CustomID:    "config-roles",
 						Placeholder: "Select one",
 						Options:     availableRoles,
 					},
