@@ -80,7 +80,6 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	g := db.GuildLookupReadString(i.GuildID)
-	/* Ignore guilds not in our DB */
 	if g == nil {
 		/* Add to db */
 		gid, err := db.GuildStrToInt(i.GuildID)
@@ -91,6 +90,7 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			return
 		}
 	}
+	g = db.GuildLookupReadString(i.GuildID)
 
 	data := i.ApplicationCommandData()
 	CmdName := data.Name

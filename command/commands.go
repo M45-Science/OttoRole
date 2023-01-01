@@ -51,7 +51,7 @@ func AddRole(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.Gui
 			discordgo.PermissionManageRoles|
 			discordgo.PermissionModerateMembers|
 			discordgo.PermissionManageWebhooks|
-			discordgo.PermissionManageServer) == 0 {
+			discordgo.PermissionManageServer) != 0 {
 			entry := discordgo.SelectMenuOption{
 				Emoji: discordgo.ComponentEmoji{
 					Name: "🚫",

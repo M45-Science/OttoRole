@@ -198,6 +198,11 @@ func ReadCluster(i int64) {
 	dataLen := int64(len(data))
 	var b int64
 
+	if dataLen < VERSION_size+staticSize {
+		fmt.Println("cluster size too small")
+		return
+	}
+
 	version := binary.LittleEndian.Uint16(data[b:])
 	b += 2
 	if version == 1 {
@@ -224,6 +229,7 @@ func ReadCluster(i int64) {
 					LID_TOP = g.LID
 				}
 				Database[g.LID] = g
+				break
 				/* Found a role instead of record end */
 			} else {
 				roleData := []RoleData{}
@@ -234,6 +240,7 @@ func ReadCluster(i int64) {
 					roleData = append(roleData, RoleData{ID: roleID})
 				}
 				g.Roles = roleData
+				break
 			}
 		}
 	} else {
