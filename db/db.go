@@ -112,7 +112,7 @@ func LookupRoleNames(s *discordgo.Session, guildData *GuildData) {
 				}
 			}
 		}
-		guildData.Lock.Lock()
+		guildData.Lock.Unlock()
 	}
 }
 
