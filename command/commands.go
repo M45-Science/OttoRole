@@ -1,7 +1,6 @@
 package command
 
 import (
-	"RoleKeeper/cwlog"
 	"RoleKeeper/db"
 	"RoleKeeper/disc"
 	"strings"
@@ -46,6 +45,9 @@ func RoleCommand(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db
 }
 
 func AddRole(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
+
+	disc.EphemeralResponse(s, i, disc.DiscCyan, "Status:", "Finding eligible roles.")
+
 	var availableRoles []discordgo.SelectMenuOption
 	roles := disc.GetGuildRoles(s, i.GuildID)
 	for _, role := range roles {
@@ -64,52 +66,53 @@ func AddRole(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.Gui
 				Emoji: discordgo.ComponentEmoji{
 					Name: "🚫",
 				},
-				Label: role.Name, Value: role.Name + "ignore"}
+				Label: role.Name, Value: role.Name + "-ignore"}
 			availableRoles = append(availableRoles, entry)
 			continue
 		}
 		//Dont add roles already in database
+		found := false
 		for _, existing := range guild.Roles {
 			if db.IntToSnowflake(existing.ID) == role.ID {
 				entry := discordgo.SelectMenuOption{
 					Emoji: discordgo.ComponentEmoji{
 						Name: "✅",
 					},
-					Label: role.Name, Value: role.Name + "ignore"}
+					Label: role.Name, Value: role.ID}
 				availableRoles = append(availableRoles, entry)
-				continue
+				found = true
+				break
 			}
 		}
-		entry := discordgo.SelectMenuOption{Label: role.Name, Value: role.ID}
-		availableRoles = append(availableRoles, entry)
+		if !found {
+			entry := discordgo.SelectMenuOption{Label: role.Name, Value: role.ID}
+			availableRoles = append(availableRoles, entry)
+		}
 	}
 	if len(availableRoles) <= 0 {
 		disc.EphemeralResponse(s, i, disc.DiscRed, "Error:", "Sorry, there are no eligabile roles that can be added!")
 		return
 	}
 
-	response := &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: "Add a role that normal users should be allowed to self-assign:",
-			Flags:   discordgo.MessageFlagsEphemeral,
-			Components: []discordgo.MessageComponent{
-				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{
-						discordgo.SelectMenu{
-							// Select menu, as other components, must have a customID, so we set it to this value.
-							CustomID:    "AddRole",
-							Placeholder: "Select one",
-							Options:     availableRoles,
-						},
+	embed := []*discordgo.MessageEmbed{{
+		Title:       "Info:",
+		Description: "Select roles to add them to the list.\nRoles in the list can be self-assigned by users.\n🚫 = Has moderator permissions\n✅ = Already in list",
+	}}
+	respose := &discordgo.WebhookEdit{
+		Components: &[]discordgo.MessageComponent{
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					discordgo.SelectMenu{
+						// Select menu, as other components, must have a customID, so we set it to this value.
+						CustomID:    "AddRole",
+						Placeholder: "Select one",
+						Options:     availableRoles,
 					},
 				},
 			},
 		},
+		Embeds: &embed,
 	}
 
-	err := s.InteractionRespond(i.Interaction, response)
-	if err != nil {
-		cwlog.DoLog(err.Error())
-	}
+	s.InteractionResponseEdit(i.Interaction, respose)
 }

@@ -79,7 +79,7 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		data := i.MessageComponentData()
 
 		if strings.EqualFold(data.CustomID, "AddRole") {
-			if i.Member.Permissions 
+
 			for _, c := range data.Values {
 				//TODO: Check IDs and permissions
 
