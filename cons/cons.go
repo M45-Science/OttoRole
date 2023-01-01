@@ -18,8 +18,7 @@ const (
 	/* GMT: Wednesday, March 16, 2242 12:56:32 PM */
 	/* So we need to remember to upgrade this in 220 years ;) */
 
-	RecordEnd = 0x21
-	RoleEnd   = 0x0022
+	RecordEnd = 0x00 //Safe, because this is an impossible discordid
 
 	//Test only
 	TSize = 134
