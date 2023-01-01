@@ -78,7 +78,7 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if i.Type == discordgo.InteractionMessageComponent {
 		data := i.MessageComponentData()
 
-		if strings.EqualFold(data.CustomID, "AddRole") {
+		if strings.EqualFold(data.CustomID, "config-roles") {
 
 			for _, c := range data.Values {
 				//TODO: Check IDs and permissions
@@ -185,6 +185,9 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
+	/*
+	 * Lookup guild, add to DB if not found
+	 */
 	g := db.GuildLookupReadString(i.GuildID)
 	if g == nil {
 		/* Add to db */
@@ -201,11 +204,7 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := i.ApplicationCommandData()
 	CmdName := data.Name
 
-	/* Ignore empty command IDs */
-	if CmdName == "" {
-		return
-	}
-
+	/* Run standard slash commands */
 	for _, c := range cmds {
 		if c.AppCmd.Name == CmdName {
 			if c.AdminOnly && i.Member.Permissions < discordgo.PermissionAdministrator {

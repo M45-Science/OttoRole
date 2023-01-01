@@ -18,7 +18,7 @@ var cmds = []Command{
 	},
 	{
 		AppCmd: &discordgo.ApplicationCommand{
-			Name:        "add-role",
+			Name:        "config-roles",
 			Description: "Add or remove roles to the list",
 		},
 		Command: AddRole,
