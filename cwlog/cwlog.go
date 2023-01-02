@@ -14,19 +14,17 @@ func DoLog(text string) {
 	ctime := time.Now()
 	_, filename, line, _ := runtime.Caller(1)
 
-	go func(text string) {
-		date := fmt.Sprintf("%2v:%2v.%2v", ctime.Hour(), ctime.Minute(), ctime.Second())
-		buf := fmt.Sprintf("%v: %15v:%5v: %v\n", date, filepath.Base(filename), line, text)
+	date := fmt.Sprintf("%2v:%2v.%2v", ctime.Hour(), ctime.Minute(), ctime.Second())
+	buf := fmt.Sprintf("%v: %15v:%5v: %v\n", date, filepath.Base(filename), line, text)
 
-		_, err := glob.LogDesc.WriteString(buf)
-		fmt.Print(buf)
+	_, err := glob.LogDesc.WriteString(buf)
+	fmt.Print(buf)
 
-		if err != nil {
-			fmt.Println("DoLog: WriteString failure")
-			glob.LogDesc.Close()
-			glob.LogDesc = nil
-		}
-	}(text)
+	if err != nil {
+		fmt.Println("DoLog: WriteString failure")
+		glob.LogDesc.Close()
+		glob.LogDesc = nil
+	}
 }
 
 /* Prep everything for the cw log */
