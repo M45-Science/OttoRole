@@ -27,21 +27,76 @@ var cmds = []Command{
 }
 
 func Roles(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
-	if len(guild.Roles) == 0 {
-		disc.EphemeralResponse(s, i, disc.DiscOrange, "ERROR:", "Sorry, there aren't any roles set up for this Discord guild right now!")
+	disc.EphemeralResponse(s, i, disc.DiscPurple, "Status:", "Finding eligible roles.")
+	db.LookupRoleNames(s, guild)
+
+	var availableRoles []discordgo.SelectMenuOption
+
+	for _, role := range guild.Roles {
+
+		found := false
+
+		//Show roles already assigned to us
+		userRoleNames := i.Member.Roles
+		userRoles := []db.RoleData{}
+		/* The list of roles from a specific user are just text, look up the actual role data. */
+		/* TODO: Flip these and optimize */
+		for _, guildRole := range guild.Roles {
+			for _, userRole := range userRoleNames {
+				if strings.EqualFold(userRole, db.IntToSnowflake(guildRole.ID)) {
+					userRoles = append(userRoles, guildRole)
+				}
+			}
+		}
+		//Make componet list
+		for _, existing := range userRoles {
+			if existing.ID == role.ID {
+
+				entry := discordgo.SelectMenuOption{
+					Emoji: discordgo.ComponentEmoji{
+						Name: "✅",
+					},
+					Label: role.Name, Value: db.IntToSnowflake(role.ID)}
+				availableRoles = append(availableRoles, entry)
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			entry := discordgo.SelectMenuOption{Label: role.Name, Value: db.IntToSnowflake(role.ID)}
+			availableRoles = append(availableRoles, entry)
+		}
+
+	}
+
+	if len(availableRoles) <= 0 {
+		disc.EphemeralResponse(s, i, disc.DiscRed, "Error:", "Sorry, there are no roles available to you.")
 		return
 	}
-	buf := ""
-	for c, role := range guild.Roles {
-		if c > 0 {
-			buf = buf + ", "
-		}
-		if role.Name == "" {
-			buf = buf + db.IntToSnowflake(role.ID)
-		}
-		buf = buf + role.Name
+
+	embed := []*discordgo.MessageEmbed{{
+		Title:       "Info:",
+		Description: "Select roles to add or remove them from yourself.\n\n✅ = Roles you already have.",
+	}}
+	respose := &discordgo.WebhookEdit{
+		Components: &[]discordgo.MessageComponent{
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					discordgo.SelectMenu{
+						// Select menu, as other components, must have a customID, so we set it to this value.
+						CustomID:    "assign-roles",
+						Placeholder: "Select one",
+						Options:     availableRoles,
+					},
+				},
+			},
+		},
+		Embeds: &embed,
 	}
-	disc.EphemeralResponse(s, i, disc.DiscOrange, "Test:", "```"+buf+"```")
+
+	s.InteractionResponseEdit(i.Interaction, respose)
+
 }
 
 func ConfigRoles(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
