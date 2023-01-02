@@ -42,7 +42,6 @@ func main() {
 
 	db.ThreadCount = runtime.NumCPU()
 	debug.SetMemoryLimit(1024 * 1024 * 1024 * 24) //24gb
-	debug.SetMaxThreads(db.ThreadCount * 10)
 
 	glob.Uptime = time.Now().UTC().Round(time.Second)
 	cwlog.StartLog()
