@@ -42,13 +42,18 @@ func main() {
 
 	db.ThreadCount = runtime.NumCPU()
 	debug.SetMemoryLimit(1024 * 1024 * 1024 * 24) //24gb
-	debug.SetMaxThreads(db.ThreadCount * 2)
+	debug.SetMaxThreads(db.ThreadCount * 10)
 
 	glob.Uptime = time.Now().UTC().Round(time.Second)
 	cwlog.StartLog()
 
 	cfg.ReadCfg()
 	cfg.WriteCfg()
+
+	db.GuildLookup = make(map[uint64]*db.GuildData, cons.TSize)
+
+	db.ReadAllClusters()
+	db.UpdateGuildLookup()
 
 	go startbot()
 
@@ -119,10 +124,6 @@ func botReady(s *discordgo.Session, r *discordgo.Ready) {
 	disc.Ready = r
 	cwlog.DoLog("Discord bot ready")
 
-	db.GuildLookup = make(map[uint64]*db.GuildData, cons.TSize)
-
-	db.ReadAllClusters()
-	db.UpdateGuildLookup()
 	go db.LookupRoleNames(s, nil)
 
 	if *glob.DoRegisterCommands {
