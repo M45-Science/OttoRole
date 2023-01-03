@@ -48,17 +48,52 @@ var (
 	Database [cons.MaxGuilds]*GuildData
 )
 
+/* Not currently used, Placeholder */
 func GuildRoleCreate(s *discordgo.Session, role *discordgo.GuildRoleCreate) {
 
+	guild := GuildLookupReadString(role.GuildID)
+	if guild != nil {
+		//Do things
+	}
 	cwlog.DoLog("Role created.")
 }
 func GuildRoleUpdate(s *discordgo.Session, role *discordgo.GuildRoleUpdate) {
 
-	cwlog.DoLog("Role modified.")
+	guild := GuildLookupReadString(role.GuildID)
+	if guild != nil {
+		found := -1
+		/* See if the role exists in the DB */
+		for rpos, dbrole := range guild.Roles {
+			if IntToSnowflake(dbrole.ID) == role.Role.ID {
+				found = rpos
+				break
+			}
+		}
+		if found >= 0 {
+			/* Delete role */
+			cwlog.DoLog(fmt.Sprintf("Event: Updated role: %v for guild %v.", role.Role.ID, guild.Guild))
+			guild.Roles[found].Name = role.Role.Name
+		}
+	}
 }
 func GuildRoleDelete(s *discordgo.Session, role *discordgo.GuildRoleDelete) {
 
-	cwlog.DoLog("Role deleted.")
+	guild := GuildLookupReadString(role.GuildID)
+	if guild != nil {
+		found := -1
+		/* See if the role exists in the DB */
+		for rpos, dbrole := range guild.Roles {
+			if IntToSnowflake(dbrole.ID) == role.RoleID {
+				found = rpos
+				break
+			}
+		}
+		if found >= 0 {
+			/* Delete role */
+			cwlog.DoLog(fmt.Sprintf("Event: Removed role: %v for guild %v.", role.RoleID, guild.Guild))
+			guild.Roles = append(guild.Roles[:found], guild.Roles[found+1:]...)
+		}
+	}
 }
 
 func IntToSnowflake(id uint64) string {
@@ -93,6 +128,7 @@ func LookupRoleNames(s *discordgo.Session, guildData *GuildData) {
 			guild.Lock.Lock()
 
 			for rpos, role := range guild.Roles {
+				/* Only look up roles with no cache */
 				if role.Name == "" {
 					roleList := disc.GetGuildRoles(s, IntToSnowflake(guild.Guild))
 					for _, discRole := range roleList {

@@ -93,7 +93,7 @@ func startbot() {
 	bot.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAllWithoutPrivileged)
 
 	bot.AddHandler(botReady)
-	bot.AddHandler(db.GuildRoleCreate)
+	//bot.AddHandler(db.GuildRoleCreate)
 	bot.AddHandler(db.GuildRoleUpdate)
 	bot.AddHandler(db.GuildRoleDelete)
 
