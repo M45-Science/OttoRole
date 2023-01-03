@@ -48,6 +48,19 @@ var (
 	Database [cons.MaxGuilds]*GuildData
 )
 
+func GuildRoleCreate(s *discordgo.Session, role *discordgo.GuildRoleCreate) {
+
+	cwlog.DoLog("Role created.")
+}
+func GuildRoleUpdate(s *discordgo.Session, role *discordgo.GuildRoleUpdate) {
+
+	cwlog.DoLog("Role modified.")
+}
+func GuildRoleDelete(s *discordgo.Session, role *discordgo.GuildRoleDelete) {
+
+	cwlog.DoLog("Role deleted.")
+}
+
 func IntToSnowflake(id uint64) string {
 	strId := fmt.Sprintf("%v", id)
 	return strId
