@@ -13,7 +13,9 @@ func handleComponet(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	data := i.MessageComponentData()
 
-	if strings.EqualFold(data.CustomID, "config-roles") {
+	if strings.EqualFold(data.CustomID, "assign-role") {
+
+	} else if strings.EqualFold(data.CustomID, "config-roles") {
 
 		for _, c := range data.Values {
 			//TODO: Check IDs and permissions
