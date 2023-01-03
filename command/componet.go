@@ -1,9 +1,11 @@
 package command
 
 import (
+	"RoleKeeper/cons"
 	"RoleKeeper/cwlog"
 	"RoleKeeper/db"
 	"RoleKeeper/disc"
+	"strconv"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -81,7 +83,7 @@ func handleComponet(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 			/* Add role, if list isn't full */
 			numRoles := len(guild.Roles)
-			if numRoles < db.MAXROLES {
+			if numRoles < cons.LimitRoles {
 				newRole := db.RoleData{ID: roleid}
 				guild.Lock.Lock()
 				guild.Roles = append(guild.Roles, newRole)
@@ -114,6 +116,19 @@ func handleComponet(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				db.WriteAllCluster()
 				db.DumpGuilds()
 				break
+			} else {
+				embed := []*discordgo.MessageEmbed{{
+					Title:       "ERROR:",
+					Description: "You can not add any more roles! Limit: " + strconv.FormatInt(cons.LimitRoles, 10),
+					Color:       disc.DiscRed,
+				}}
+				respose := &discordgo.WebhookEdit{
+					Embeds: &embed,
+				}
+				_, err = s.InteractionResponseEdit(i.Interaction, respose)
+				if err != nil {
+					cwlog.DoLog("Error: " + err.Error())
+				}
 			}
 		}
 	}

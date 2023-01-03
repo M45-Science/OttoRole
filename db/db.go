@@ -129,7 +129,7 @@ func LookupRoleNames(s *discordgo.Session, guildData *GuildData) {
 
 			for rpos, role := range guild.Roles {
 				/* Only look up roles with no cache */
-				if role.Name == "" {
+				if rpos < cons.LimitRoles && role.Name == "" {
 					roleList := disc.GetGuildRoles(s, IntToSnowflake(guild.Guild))
 					for _, discRole := range roleList {
 						discRoleID, err := SnowflakeToInt(discRole.ID)
