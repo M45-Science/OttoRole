@@ -3,7 +3,7 @@ package cons
 const (
 	Version            = "001-12312022-0534p"
 	BotName            = "RoleKeeper"
-	DumpName           = "db-dump.json"
+	DumpName           = "db-dump.json.zlib"
 	ClusterPrefix      = "cluster-"
 	ClusterSuffix      = ".ccf"
 	ConfigFile         = "config.json"

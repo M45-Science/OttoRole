@@ -13,11 +13,11 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/remeh/sizedwaitgroup"
+	"github.com/sasha-s/go-deadlock"
 )
 
 type RoleData struct {
@@ -36,13 +36,13 @@ type GuildData struct {
 	Roles    []RoleData `json:"r,omitempty"`
 
 	/* Not on disk */
-	Lock sync.RWMutex `json:"-"`
+	Lock deadlock.RWMutex `json:"-"`
 }
 
 var (
 	LID_TOP         uint32 = 0
 	GuildLookup     map[uint64]*GuildData
-	GuildLookupLock sync.RWMutex
+	GuildLookupLock deadlock.RWMutex
 	ThreadCount     int
 
 	Database [cons.MaxGuilds]*GuildData
@@ -74,7 +74,9 @@ func LookupRoleNames(s *discordgo.Session, guildData *GuildData) {
 
 	//Process all guilds
 	if guildData == nil {
+		GuildLookupLock.Lock()
 		for gpos, guild := range GuildLookup {
+			time.Sleep(time.Millisecond) //Let other processes run
 			guild.Lock.Lock()
 
 			for rpos, role := range guild.Roles {
@@ -97,6 +99,7 @@ func LookupRoleNames(s *discordgo.Session, guildData *GuildData) {
 
 			guild.Lock.Unlock()
 		}
+		GuildLookupLock.Unlock()
 		buf := fmt.Sprintf("Added %v role names in %v.", count, time.Since(startTime).String())
 		cwlog.DoLog(buf)
 	} else { //Process a specific guild
@@ -315,12 +318,15 @@ func AppendCluster(guild *GuildData, cid uint32, gid uint32) {
 func UpdateGuildLookup() {
 	startTime := time.Now()
 
+	GuildLookupLock.Lock()
 	var x uint32
 	for x = 1; x <= LID_TOP; x++ {
 		if Database[x] != nil {
 			GuildLookup[Database[x].Guild] = Database[x]
 		}
 	}
+	GuildLookupLock.Unlock()
+
 	endTime := time.Now()
 	cwlog.DoLog("Guild lookup map update, took: " + endTime.Sub(startTime).String())
 
@@ -340,12 +346,14 @@ func GuildLookupReadString(i string) *GuildData {
 	val, err := SnowflakeToInt(i)
 	if err == nil {
 		g := GuildLookup[val]
+		GuildLookupLock.RUnlock()
 		return g
 	}
 	GuildLookupLock.RUnlock()
 	return nil
 }
 
+// Does not need a lock, this is pre-allocated.
 func AddGuild(guildid uint64) {
 	cwlog.DoLog(fmt.Sprintf("AddGuild: %v", guildid))
 
@@ -395,13 +403,14 @@ func DumpGuilds() {
 	enc := json.NewEncoder(outbuf)
 	if err := enc.Encode(GuildLookup); err != nil {
 		cwlog.DoLog("DumpGuilds: enc.Encode failure")
+		GuildLookupLock.RUnlock()
 		return
 	}
 	GuildLookupLock.RUnlock()
 
 	nfilename := cons.DumpName + ".tmp"
 	//compBuf := compressZip(outbuf.Bytes())
-	err = os.WriteFile(nfilename, outbuf.Bytes(), 0644)
+	err = os.WriteFile(nfilename, compressZip(outbuf.Bytes()), 0644)
 
 	if err != nil {
 		cwlog.DoLog("DumpGuilds: Couldn't write db temp file.")

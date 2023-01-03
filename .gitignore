@@ -1,6 +1,5 @@
 config.json
 RoleKeeper
 data/
-guilddb.json
 *.dat
-db-dump.json
+db-dump.*
