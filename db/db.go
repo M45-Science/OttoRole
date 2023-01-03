@@ -410,7 +410,7 @@ func DumpGuilds() {
 
 	nfilename := cons.DumpName + ".tmp"
 	//compBuf := compressZip(outbuf.Bytes())
-	err = os.WriteFile(nfilename, compressZip(outbuf.Bytes()), 0644)
+	err = os.WriteFile(nfilename, outbuf.Bytes(), 0644)
 
 	if err != nil {
 		cwlog.DoLog("DumpGuilds: Couldn't write db temp file.")
