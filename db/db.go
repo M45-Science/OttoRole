@@ -70,7 +70,7 @@ func GuildRoleUpdate(s *discordgo.Session, role *discordgo.GuildRoleUpdate) {
 			}
 		}
 		if found >= 0 {
-			/* Delete role */
+			/* Update role name */
 			cwlog.DoLog(fmt.Sprintf("Event: Updated role: %v for guild %v.", role.Role.ID, guild.Guild))
 			guild.Roles[found].Name = role.Role.Name
 		}
