@@ -11,23 +11,23 @@ import (
 var cmds = []Command{
 	{
 		AppCmd: &discordgo.ApplicationCommand{
-			Name:        "roles",
-			Description: "Add or Remove roles to yourself, for groups and notifcations!",
+			Name:        "get-roles",
+			Description: "Sends drop-down menu: Assign or remove roles from yourself.",
 		},
-		Command: Roles,
+		Command: GetRoles,
 	},
 	{
 		AppCmd: &discordgo.ApplicationCommand{
-			Name:        "config-roles",
-			Description: "Add or remove roles to the list",
+			Name:        "configure-bot",
+			Description: "Sends drop-down menu: Add or remove roles to the list, users can self-assign/remove these.",
 		},
-		Command: ConfigRoles,
+		Command: ConfigureBot,
 		ModOnly: true,
 	},
 }
 
-func Roles(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
-	disc.EphemeralResponse(s, i, disc.DiscPurple, "Status:", "Finding eligible roles.")
+func GetRoles(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
+	disc.EphemeralResponse(s, i, disc.DiscPurple, "Status:", "Finding eligible roles.", false)
 	db.LookupRoleNames(s, guild)
 
 	var availableRoles []discordgo.SelectMenuOption
@@ -71,7 +71,7 @@ func Roles(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.Guild
 	}
 
 	if len(availableRoles) <= 0 {
-		disc.EphemeralResponse(s, i, disc.DiscRed, "Error:", "Sorry, there are no roles available to you.")
+		disc.EphemeralResponse(s, i, disc.DiscRed, "Error:", "Sorry, there are no roles available to you.", true)
 		return
 	}
 
@@ -88,6 +88,7 @@ func Roles(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.Guild
 						CustomID:    "assign-roles",
 						Placeholder: "Select one",
 						Options:     availableRoles,
+						MaxValues:   len(availableRoles),
 					},
 				},
 			},
@@ -99,13 +100,19 @@ func Roles(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.Guild
 
 }
 
-func ConfigRoles(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
+func ConfigureBot(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.GuildData) {
 
-	disc.EphemeralResponse(s, i, disc.DiscPurple, "Status:", "Finding eligible roles.")
+	/* Reply right away, so we don't time out looking up role names */
+	disc.EphemeralResponse(s, i, disc.DiscPurple, "Status:", "Finding eligible roles.", false)
 
 	var availableRoles []discordgo.SelectMenuOption
 	roles := disc.GetGuildRoles(s, i.GuildID)
 
+	/*
+	 * Cycle through all guild roles, and make a list for the drop-down menu
+	 * First add eligable roles from the guild that aren't in the database
+	 * Then add roles that are in the database, and mark them as selected with a green check
+	 */
 	for _, role := range roles {
 
 		//Block specific names
@@ -115,7 +122,7 @@ func ConfigRoles(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db
 
 		found := false
 
-		//Exclude roles with moderator permissions
+		/* Exclude roles with moderator permissions */
 		if role.Permissions&(discordgo.PermissionAdministrator|
 			discordgo.PermissionBanMembers|
 			discordgo.PermissionManageRoles|
@@ -125,21 +132,15 @@ func ConfigRoles(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db
 			found = true
 		}
 
-		//Show roles already in database
+		/* Skip roles already in database */
 		for _, existing := range guild.Roles {
 			if db.IntToSnowflake(existing.ID) == role.ID {
-
-				entry := discordgo.SelectMenuOption{
-					Emoji: discordgo.ComponentEmoji{
-						Name: "✅",
-					},
-					Label: role.Name, Value: role.ID}
-				availableRoles = append(availableRoles, entry)
 				found = true
 				break
 			}
 		}
 
+		/* Role is not already in the database */
 		if !found {
 			entry := discordgo.SelectMenuOption{Label: role.Name, Value: role.ID}
 			availableRoles = append(availableRoles, entry)
@@ -147,8 +148,22 @@ func ConfigRoles(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db
 
 	}
 
+	/*
+	 * Show roles that are already selected, even if no longer existing
+	 * This shouldnt happen, but would be helpful just in case it does
+	 */
+	for _, grole := range guild.Roles {
+		entry := discordgo.SelectMenuOption{
+			Emoji: discordgo.ComponentEmoji{
+				Name: "✅",
+			},
+			Label: grole.Name, Value: db.IntToSnowflake(grole.ID)}
+		availableRoles = append(availableRoles, entry)
+	}
+
+	/* Let user know if there are no eligable roles */
 	if len(availableRoles) <= 0 {
-		disc.EphemeralResponse(s, i, disc.DiscRed, "Error:", "Sorry, there are no eligabile roles that can be added!")
+		disc.EphemeralResponse(s, i, disc.DiscRed, "Error:", "Sorry, there are no eligible roles!", true)
 		return
 	}
 
@@ -165,6 +180,7 @@ func ConfigRoles(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db
 						CustomID:    "config-roles",
 						Placeholder: "Select one",
 						Options:     availableRoles,
+						MaxValues:   len(availableRoles),
 					},
 				},
 			},

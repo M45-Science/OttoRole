@@ -2,6 +2,8 @@ package disc
 
 import (
 	"RoleKeeper/cwlog"
+	"fmt"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -19,6 +21,47 @@ const (
 	DiscBlue   = 0x0000FF
 	DiscPurple = 0xFF00FF
 )
+
+/* Check if player has role */
+func UserHasRole(i *discordgo.InteractionCreate, RoleName string) bool {
+
+	if i.Member != nil {
+		for _, r := range i.Member.Roles {
+			if strings.EqualFold(r, RoleName) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+/* Give a player a role */
+func SmartRoleAdd(s *discordgo.Session, gid string, uid string, rid string) error {
+
+	err := s.GuildMemberRoleAdd(gid, uid, rid)
+
+	if err != nil {
+
+		cwlog.DoLog(fmt.Sprintf("SmartRoleAdd: ERROR: %v", err))
+		return err
+	}
+
+	return nil
+}
+
+/* Remove a player a role */
+func SmartRoleDelete(s *discordgo.Session, gid string, uid string, rid string) error {
+
+	err := s.GuildMemberRoleRemove(gid, uid, rid)
+
+	if err != nil {
+
+		cwlog.DoLog(fmt.Sprintf("SmartRoleDelete: ERROR: %v", err))
+		return err
+	}
+
+	return nil
+}
 
 func GetGuildRoles(s *discordgo.Session, guildid string) []*discordgo.Role {
 	guild, err := s.Guild(guildid)
@@ -60,8 +103,10 @@ func FollowupResponse(s *discordgo.Session, i *discordgo.InteractionCreate, f *d
 
 }
 
-func EphemeralResponse(s *discordgo.Session, i *discordgo.InteractionCreate, color int, title, message string) {
-	cwlog.DoLog("EphemeralResponse:\n" + i.Member.User.Username + "\n" + title + "\n" + message)
+func EphemeralResponse(s *discordgo.Session, i *discordgo.InteractionCreate, color int, title, message string, doLog bool) {
+	if doLog {
+		cwlog.DoLog("EphemeralResponse:\n" + i.Member.User.Username + "\n" + title + "\n" + message)
+	}
 
 	var elist []*discordgo.MessageEmbed
 	elist = append(elist, &discordgo.MessageEmbed{Title: title, Description: message, Color: color})

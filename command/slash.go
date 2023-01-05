@@ -53,10 +53,10 @@ func SlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	for _, c := range cmds {
 		if c.AppCmd.Name == CmdName {
 			if c.AdminOnly && i.Member.Permissions < discordgo.PermissionAdministrator {
-				disc.EphemeralResponse(s, i, disc.DiscRed, "ERROR:", "You do not have the necessary permissions to use this command.")
+				disc.EphemeralResponse(s, i, disc.DiscRed, "ERROR:", "You do not have the necessary permissions to use this command.", false)
 				return
 			} else if c.ModOnly && i.Member.Permissions < discordgo.PermissionManageRoles {
-				disc.EphemeralResponse(s, i, disc.DiscRed, "ERROR:", "You do not have the necessary permissions to use this command.")
+				disc.EphemeralResponse(s, i, disc.DiscRed, "ERROR:", "You do not have the necessary permissions to use this command.", false)
 				return
 			}
 			c.Command(s, i, g)
