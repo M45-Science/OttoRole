@@ -26,15 +26,15 @@ func handleComponet(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	if strings.EqualFold(data.CustomID, "assign-roles") {
 
-		disc.EphemeralResponse(s, i, disc.DiscPurple, "Status:", "Working...", false)
+		disc.EphemeralResponse(s, i, disc.DiscPurple, "Status:", "Loading role data...", false)
 
 		for _, c := range data.Values {
 			roleid, err := db.SnowflakeToInt(c)
 
 			if err != nil {
-				changes = changes + "Selection contained invalid role data: " + c + "\n"
+				changes = changes + "Selection contained invalid role data!\n"
 				errfound = true
-				break
+				continue
 			}
 
 			found := -1
@@ -62,38 +62,43 @@ func handleComponet(s *discordgo.Session, i *discordgo.InteractionCreate) {
 					if err != nil {
 						changes = changes + "Unable to remove role: " + roleName + "\n"
 						errfound = true
-						break
+						continue
 					} else {
 						changes = changes + "Role removed: " + roleName + "\n"
-
+						continue
 					}
 				} else {
 					err := disc.SmartRoleAdd(s, i.GuildID, i.Member.User.ID, c)
 					if err != nil {
-						changes = changes + "Unable to assign roleid: " + roleName + "\n"
+						changes = changes + "Unable to assign role: " + roleName + "\n"
 						errfound = true
-						break
+						continue
 					} else {
 						changes = changes + "Role assigned: " + roleName + "\n"
+						continue
 
 					}
 				}
 			} else {
 				changes = changes + "Role invalid: " + roleName + "\n"
+				continue
 			}
 
 		}
 	} else if strings.EqualFold(data.CustomID, "config-roles") {
 
-		disc.EphemeralResponse(s, i, disc.DiscPurple, "Status:", "Working...", false)
+		//CHECK MOD PRIVLEGES HERE
+
+		disc.EphemeralResponse(s, i, disc.DiscPurple, "Status:", "Loading role data...", false)
+
 		for _, c := range data.Values {
 
 			roleid, err := db.SnowflakeToInt(c)
 
 			if err != nil {
-				changes = changes + "Selection contained invalid role data: " + c + "\n"
+				changes = changes + "Selection contained invalid role data!\n"
 				errfound = true
-				break
+				continue
 			}
 
 			found := -1
@@ -126,6 +131,7 @@ func handleComponet(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 				changes = changes + "Role removed: " + roleName + "\n"
 				dirty = true //Save DB
+				continue
 			} else {
 
 				/* Add role, if list isn't full */
@@ -151,10 +157,12 @@ func handleComponet(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 					dirty = true //Save DB
 					changes = changes + "Role added: " + roleName + "\n"
+					continue
 
 				} else {
 					changes = changes + fmt.Sprintf("You can't add any more roles. Limit: %v\n", cons.LimitRoles)
 					errfound = true
+					continue
 				}
 			}
 		}
@@ -176,10 +184,10 @@ func handleComponet(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if err != nil {
 			cwlog.DoLog("Error: " + err.Error())
 		}
-	}
 
-	if dirty {
-		db.WriteAllCluster()
-		db.DumpGuilds()
+		if dirty {
+			db.WriteAllCluster()
+			db.DumpGuilds()
+		}
 	}
 }
