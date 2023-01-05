@@ -21,19 +21,19 @@ import (
 )
 
 type RoleData struct {
-	Name string `json:"n,omitempty"`
-	ID   uint64 `json:"i"`
+	Name string `json:",omitempty"`
+	ID   uint64 `json:",omitempty"`
 }
 
 type GuildData struct {
 	//Name type bytes
-	LID      uint32     `json:"l,omitempty"`
-	Customer uint64     `json:"c,omitempty"`
+	LID      uint32     `json:",omitempty"`
+	Customer uint64     `json:",omitempty"`
 	Guild    uint64     `json:"-"` //Already in JSON as KEY
-	Added    uint32     `json:"a,omitempty"`
-	Modified uint32     `json:"m,omitempty"`
-	Donator  uint8      `json:"d,omitempty"`
-	Roles    []RoleData `json:"r,omitempty"`
+	Added    uint32     `json:",omitempty"`
+	Modified uint32     `json:",omitempty"`
+	Donator  uint8      `json:",omitempty"`
+	Roles    []RoleData `json:",omitempty"`
 
 	/* Not on disk */
 	Lock deadlock.RWMutex `json:"-"`
@@ -48,15 +48,6 @@ var (
 	Database [cons.MaxGuilds]*GuildData
 )
 
-/* Not currently used, Placeholder */
-func GuildRoleCreate(s *discordgo.Session, role *discordgo.GuildRoleCreate) {
-
-	guild := GuildLookupReadString(role.GuildID)
-	if guild != nil {
-		//Do things
-	}
-	cwlog.DoLog("Role created.")
-}
 func GuildRoleUpdate(s *discordgo.Session, role *discordgo.GuildRoleUpdate) {
 
 	guild := GuildLookupReadString(role.GuildID)
@@ -450,6 +441,7 @@ func DumpGuilds() {
 
 	outbuf := new(bytes.Buffer)
 	enc := json.NewEncoder(outbuf)
+	enc.SetIndent("", "\t")
 	if err := enc.Encode(GuildLookup); err != nil {
 		cwlog.DoLog("DumpGuilds: enc.Encode failure")
 		GuildLookupLock.RUnlock()
