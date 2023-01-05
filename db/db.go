@@ -122,9 +122,9 @@ func LookupRoleNames(s *discordgo.Session, guildData *GuildData) {
 
 	//Process all guilds
 	if guildData == nil {
-		GuildLookupLock.Lock()
+		GuildLookupLock.RLock()
 		for gpos, guild := range GuildLookup {
-			time.Sleep(time.Millisecond) //Let other processes run
+			time.Sleep(cons.LockRest)
 			guild.Lock.Lock()
 
 			for rpos, role := range guild.Roles {
@@ -148,7 +148,7 @@ func LookupRoleNames(s *discordgo.Session, guildData *GuildData) {
 
 			guild.Lock.Unlock()
 		}
-		GuildLookupLock.Unlock()
+		GuildLookupLock.RUnlock()
 		buf := fmt.Sprintf("Added %v role names in %v.", count, time.Since(startTime).String())
 		cwlog.DoLog(buf)
 	} else { //Process a specific guild
