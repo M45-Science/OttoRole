@@ -7,6 +7,7 @@ import (
 	"RoleKeeper/disc"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -139,6 +140,7 @@ func handleComponet(s *discordgo.Session, i *discordgo.InteractionCreate) {
 					}
 				}
 				guild.Lock.RUnlock()
+				time.Sleep(cons.LockRest)
 
 				guild.Lock.Lock()
 				guild.Roles = append(guild.Roles[:found], guild.Roles[found+1:]...)
@@ -158,6 +160,8 @@ func handleComponet(s *discordgo.Session, i *discordgo.InteractionCreate) {
 					guild.Roles = append(guild.Roles, newRole)
 					guild.Modified = db.NowToCompact()
 					guild.Lock.Unlock()
+
+					time.Sleep(cons.LockRest)
 
 					/* Lookup name after add */
 					db.LookupRoleNames(s, guild)
