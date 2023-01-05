@@ -87,7 +87,22 @@ func handleComponet(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	} else if strings.EqualFold(data.CustomID, "config-roles") {
 
-		//CHECK MOD PRIVLEGES HERE
+		/* Check moderator privleges */
+		roles := disc.GetGuildRoles(s, i.GuildID)
+		for _, role := range roles {
+			for _, mrole := range i.Member.Roles {
+				if mrole == role.Name {
+					if role.Permissions&(discordgo.PermissionAdministrator|
+						discordgo.PermissionBanMembers|
+						discordgo.PermissionManageRoles|
+						discordgo.PermissionModerateMembers|
+						discordgo.PermissionManageWebhooks|
+						discordgo.PermissionManageServer) == 0 {
+						return /* This user is not a moderator, don't even reply */
+					}
+				}
+			}
+		}
 
 		disc.EphemeralResponse(s, i, disc.DiscPurple, "Status:", "Loading role data...", false)
 
