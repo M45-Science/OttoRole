@@ -94,7 +94,7 @@ func GetRoles(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.Gu
 					discordgo.SelectMenu{
 						// Select menu, as other components, must have a customID, so we set it to this value.
 						CustomID:    "assign-roles",
-						Placeholder: "Select one",
+						Placeholder: "Choose roles",
 						Options:     availableRoles,
 						MaxValues:   len(availableRoles),
 					},
@@ -194,7 +194,7 @@ func ConfigureBot(s *discordgo.Session, i *discordgo.InteractionCreate, guild *d
 					discordgo.SelectMenu{
 						// Select menu, as other components, must have a customID, so we set it to this value.
 						CustomID:    "config-roles",
-						Placeholder: "Select one",
+						Placeholder: "Choose roles",
 						Options:     availableRoles,
 						MaxValues:   len(availableRoles),
 					},
