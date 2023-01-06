@@ -71,7 +71,15 @@ func GetRoles(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.Gu
 	}
 
 	if len(availableRoles) <= 0 {
-		disc.EphemeralResponse(s, i, disc.DiscRed, "Error:", "Sorry, there are no roles available to you.", true)
+		embed := []*discordgo.MessageEmbed{{
+			Title:       "Error:",
+			Description: "Sorry, there are no roles available to you right now.",
+		}}
+		respose := &discordgo.WebhookEdit{
+			Embeds: &embed,
+		}
+
+		s.InteractionResponseEdit(i.Interaction, respose)
 		return
 	}
 
@@ -163,7 +171,15 @@ func ConfigureBot(s *discordgo.Session, i *discordgo.InteractionCreate, guild *d
 
 	/* Let user know if there are no eligable roles */
 	if len(availableRoles) <= 0 {
-		disc.EphemeralResponse(s, i, disc.DiscRed, "Error:", "Sorry, there are no eligible roles!", true)
+		embed := []*discordgo.MessageEmbed{{
+			Title:       "Error:",
+			Description: "Sorry, there are no eligible roles!",
+		}}
+		respose := &discordgo.WebhookEdit{
+			Embeds: &embed,
+		}
+
+		s.InteractionResponseEdit(i.Interaction, respose)
 		return
 	}
 
