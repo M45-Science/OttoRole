@@ -13,6 +13,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -161,17 +162,42 @@ func LookupRoleNames(s *discordgo.Session, guildData *GuildData) {
 
 func WriteLIDTop() {
 	buf := fmt.Sprintf("LIDTop: %v", LID_TOP)
-	err := os.WriteFile("data/"+cons.LIDTopFile+".tmp", []byte(buf), 0644)
+	err := os.WriteFile("data/db/"+cons.LIDTopFile+".tmp", []byte(buf), 0644)
 
 	if err != nil && err != fs.ErrNotExist {
 		cwlog.DoLog(err.Error())
 		return
 	}
-	err = os.Rename("data/"+cons.LIDTopFile+".tmp", "data/"+cons.LIDTopFile)
+	err = os.Rename("data/db/"+cons.LIDTopFile+".tmp", "data/db/"+cons.LIDTopFile)
 
 	if err != nil {
 		cwlog.DoLog("WriteLIDTop: Couldn't rename file: " + cons.LIDTopFile)
 		return
+	}
+}
+
+func ReadLIDTop() {
+	data, err := os.ReadFile("data/db/" + cons.LIDTopFile)
+	if err != nil {
+		cwlog.DoLog("Unable to read LIDTop file, exiting")
+		os.Exit(1)
+		return
+	}
+	splitData := strings.Split(string(data), ":")
+
+	if len(splitData) > 1 {
+		valString := splitData[1]
+		cleanVal := strings.TrimSuffix(valString, "\n")
+		cleanVal = strings.TrimPrefix(cleanVal, " ")
+		intVal, err := strconv.ParseUint(cleanVal, 10, 32)
+
+		if err != nil {
+			cwlog.DoLog("Unable to parse LIDTop value, exiting")
+			os.Exit(1)
+			return
+		}
+
+		LID_TOP = uint32(intVal)
 	}
 }
 

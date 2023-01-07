@@ -3,7 +3,7 @@ package cons
 import "time"
 
 const (
-	Version            = "002-010623-0103"
+	Version            = "002-010623-0605p"
 	BotName            = "RoleKeeper"
 	DumpName           = "db-dump.json"
 	ClusterPrefix      = "cluster-"
