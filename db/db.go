@@ -176,12 +176,12 @@ func WriteLIDTop() {
 	}
 }
 
-func ReadLIDTop() {
+func ReadLIDTop() int64 {
 	data, err := os.ReadFile("data/db/" + cons.LIDTopFile)
 	if err != nil {
 		cwlog.DoLog("Unable to read LIDTop file, exiting")
 		os.Exit(1)
-		return
+		return -1
 	}
 	splitData := strings.Split(string(data), ":")
 
@@ -194,11 +194,12 @@ func ReadLIDTop() {
 		if err != nil {
 			cwlog.DoLog("Unable to parse LIDTop value, exiting")
 			os.Exit(1)
-			return
+			return -1
 		}
 
-		LID_TOP = uint32(intVal)
+		return int64(intVal)
 	}
+	return -1
 }
 
 func WriteAllCluster() {
@@ -305,6 +306,13 @@ func ReadAllClusters() {
 	wg.Wait()
 	endTime := time.Now()
 
+	lid := ReadLIDTop()
+	if lid != int64(LID_TOP) {
+		cwlog.DoLog(fmt.Sprintf("ERROR: LIDTOPFile: %v, LIDTOP: %v\nSTOPPING for 5 minutes!\n", lid, LID_TOP))
+		time.Sleep(time.Second * 300)
+		os.Exit(1)
+		return
+	}
 	cwlog.DoLog("Read all clusters, took: " + endTime.Sub(startTime).String())
 }
 
@@ -346,11 +354,10 @@ func ReadCluster(i int64) {
 			if numRoles == 0 {
 				if g.LID >= cons.MaxGuilds {
 					cwlog.DoLog("LID larger than maxguild.")
-					continue
+					break
 				}
 				LID_TOP++
 				Database[LID_TOP] = g
-				break
 				/* Found a role instead of record end */
 			} else {
 				roleData := []RoleData{}
@@ -363,7 +370,6 @@ func ReadCluster(i int64) {
 				g.Roles = roleData
 				LID_TOP++
 				Database[LID_TOP] = g
-				break
 			}
 		}
 	} else {
@@ -449,7 +455,7 @@ func UnixToCompact(input uint64) uint32 {
 
 func DumpGuilds() {
 
-	fo, err := os.Create(cons.DumpName)
+	fo, err := os.Create("data/" + cons.DumpName)
 	if err != nil {
 		cwlog.DoLog("Couldn't open db file, skipping...")
 		return
@@ -475,7 +481,7 @@ func DumpGuilds() {
 	}
 	GuildLookupLock.RUnlock()
 
-	nfilename := cons.DumpName + ".tmp"
+	nfilename := "data/" + cons.DumpName + ".tmp"
 	//compBuf := compressZip(outbuf.Bytes())
 	err = os.WriteFile(nfilename, outbuf.Bytes(), 0644)
 
@@ -485,7 +491,7 @@ func DumpGuilds() {
 	}
 
 	oldName := nfilename
-	newName := cons.DumpName
+	newName := "data/" + cons.DumpName
 	err = os.Rename(oldName, newName)
 
 	if err != nil {

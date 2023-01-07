@@ -51,7 +51,6 @@ func main() {
 
 	db.GuildLookup = make(map[uint64]*db.GuildData, cons.TSize)
 
-	db.ReadLIDTop()
 	db.ReadAllClusters()
 	db.UpdateGuildLookup()
 
