@@ -24,7 +24,8 @@ list-server (database/child list, shard-count), databases and children(shard)
 databases: simply record data sent to it, can send guild data back when requested.
 children boot, ask list-server for list of databases or use cached list if no response.
 children connect to databases and distribute requests among them as possible to get data they need to serve requests.
-once loaded, children send new data to all databases in the list and keep track of which ones have not verified they have recently sent data. children will keep trying to send data to databases until marked clean or database marked dead.
+once loaded, children send new data to all databases in the list and keep track of which ones have not verified they have recently sent data.
+children will keep trying to send data to databases until marked clean or database marked dead or some timeout.
 
 child hotboot: grandchild boots, ignores any requests it does not know about -hotboot
 grandchild gets list of all data from child, once complete child dies leaving grandchild, grandchild exits hotboot mode.
