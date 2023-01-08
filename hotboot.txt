@@ -19,7 +19,7 @@ This could be done over stdio or TCP.
 
 
 #SHARD MODEL
-list-server, databases and children(shard)
+list-server (database/child list, shard-count), databases and children(shard)
 
 databases: simply record data sent to it, can send guild data back when requested.
 children boot, ask list-server for list of databases or use cached list if no response.
