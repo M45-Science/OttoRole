@@ -1,15 +1,27 @@
 
-#HOT BOOT
-1: Event: reboot commmand/signal/file
-2a: send all incoming requests to a list 'request list'. If not a low-ram hotboot then only /config-bot to list
-2b: if low-ram hotboot ( auto detect free ram? ) then also send user requests to list
-3: wait for all in-progress processes to finish (develop a process list)
-5: write Database. if low-ram hotboot deallocate database after write, otherwise continue to handle client requests
-6: start new server
-7: wait for child db load complete message
-8: disconnect from discord, and send/write 'request list'
-9: child: after 'request list' received and processed, tell parent goodbye
-10: child: connect to discord
+#HOTBOOT (always low ram v2)
+Decouple discord code from processing code with a queue (possibly fixed-size prealloc pointers)
 
-This could all be done over stdio, with a -hotboot argument.
-Check if parent process dying, leaving child functions properly (chatwire?)
+1: Reboot event (signal from compile script, delete after detected)
+2: Start new server with -hotboot, once connected child replies (ready).
+Child does not load DB. It will only process guilds it has in hotboot mode (no auto-create we should do this on new_intergation anyway)
+
+3: lock one guild, send to child, delete/unlock guild (defer?), repeat for all guilds with sleeps. May need to trigger GC every X guilds.
+if incoming request goes to a nil guild, forward to child (directly into queue)
+
+4: once all guilds transfered, parent can disconnect from discord and tell child goodbye.
+5: on goodbye, child exits hotboot mode.
+
+Probably transfer with glob or db format.
+Need starting identifyier for guild data / forwarded requests
+This could be done over stdio or TCP.
+
+
+
+#SHARD MODEL
+list-server, databases and children(shard)
+
+databases: simply record data sent to it, can send guild data back when requested.
+children boot, ask list-server for list of databases or use cached list if no response.
+children connect to databases and distribute requests among them as possible to get data they need to serve requests.
+once loaded, children send new data to all databases in the list and keep track of which ones have not verified they have recently sent data. children will keep trying to send data to databases until marked clean or database marked dead.
