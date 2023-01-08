@@ -45,3 +45,5 @@ workers can change their shard count and get new shard-number, and request data 
 THOUGHT:
 if the worker was marked dead, we should slowly pull in all guild data we need, otherwise just request as-needed?
 possily purge and GC any guilds we no longer serve.
+
+Maybe databases and workers should only snapshot on reboots, and list server should request regular well-distributed reboots.
