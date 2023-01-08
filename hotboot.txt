@@ -19,15 +19,27 @@ This could be done over stdio or TCP.
 
 
 #SHARD MODEL
-list-server (database/child list, shard-count), databases and children(shard)
+list-server (database/worker list, shard-count), databases and workers(shard)
 
-databases: simply record data sent to it, can send guild data back when requested.
-children boot, ask list-server for list of databases or use cached list if no response.
-children connect to databases and distribute requests among them as possible to get data they need to serve requests.
-once loaded, children send new data to all databases in the list and keep track of which ones have not verified they have recently sent data.
-children will keep trying to send data to databases until marked clean or database marked dead or some timeout.
+list server is just a list of databases and workers and their status, along with a shard count.
 
-child hotboot: grandchild boots, ignores any requests it does not know about -hotboot
-grandchild gets list of all data from child, once complete child dies leaving grandchild, grandchild exits hotboot mode.
-child shutdown: tell list server we will be offline, and to change shard count/ids.
-other children can change their shard count, and request data from databases if a requst comes in (non caching???)
+workers handle discord requests and cache data for guilds their shard would serve or not yet verfied-saved by databases.
+
+databases mostly record data, and reply back when when recieved, and again when saved to disk.
+But also can send specific guild data when requested. (brand-new workers, shard number changes)
+
+
+workers boot, ask list-server for list of databases or use cached list if no response.
+workers connect to databases and distribute requests among them as possible to get data they need to serve requests.
+once loaded, workers send new data to all databases, and keep track of what databases have recieved or verfied receipt of data.
+workers will keep trying to send data to databases until marked clean or database marked dead (or some timeout). Possibly exponetial delay.
+
+worker hotboot: boots child, child ignores any requests it does not know about '-hotboot'
+child gets list of all data from parent, once complete parent dies leaving child, child exits hotboot mode and becomes parent.
+
+worker shutdown: tell list server we will be offline (temporary, or dying), and to change shard count/ids (for full reboots)
+worker should wait until list server replies that all workers are notified and ready.
+
+workers can change their shard count, and request data from databases if a requst comes in.
+thought:
+if the worker was marked dead, we should slowly pull in all guild data we need, otherwise just request as-needed?
