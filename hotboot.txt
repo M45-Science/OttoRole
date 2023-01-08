@@ -40,6 +40,8 @@ child gets list of all data from parent, once complete parent dies leaving child
 worker shutdown: tell list server we will be offline (temporary, or dying), and to change shard count/ids (for full reboots)
 worker should wait until list server replies that all workers are notified and ready.
 
-workers can change their shard count, and request data from databases if a requst comes in.
-thought:
+workers can change their shard count and get new shard-number, and request data from databases if a requst comes in we don't have data for.
+
+THOUGHT:
 if the worker was marked dead, we should slowly pull in all guild data we need, otherwise just request as-needed?
+possily purge and GC any guilds we no longer serve.
