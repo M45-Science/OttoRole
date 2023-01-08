@@ -49,3 +49,4 @@ possily purge and GC any guilds we no longer serve.
 Debate: snapshot on specific bloat size, and/or on reboots.
 Snapshots should be quite fast with only 2500 guilds.
 daily and/or bloat size could be fine.
+databases could verify each other automatically, and auto sync orphans with whatever is newer.
