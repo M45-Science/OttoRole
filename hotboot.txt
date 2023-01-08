@@ -1,0 +1,15 @@
+
+#HOT BOOT
+1: Event: reboot commmand/signal/file
+2a: send all incoming requests to a list 'request list'. If not a low-ram hotboot then only /config-bot to list
+2b: if low-ram hotboot ( auto detect free ram? ) then also send user requests to list
+3: wait for all in-progress processes to finish (develop a process list)
+5: write Database. if low-ram hotboot deallocate database after write, otherwise continue to handle client requests
+6: start new server
+7: wait for child db load complete message
+8: disconnect from discord, and send/write 'request list'
+9: child: after 'request list' received and processed, tell parent goodbye
+10: child: connect to discord
+
+This could all be done over stdio, with a -hotboot argument.
+Check if parent process dying, leaving child functions properly (chatwire?)
