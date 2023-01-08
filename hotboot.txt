@@ -28,3 +28,5 @@ once loaded, children send new data to all databases in the list and keep track 
 
 child hotboot: grandchild boots, ignores any requests it does not know about -hotboot
 grandchild gets list of all data from child, once complete child dies leaving grandchild, grandchild exits hotboot mode.
+child shutdown: tell list server we will be offline, and to change shard count.
+other children can change their shard count, and request data from databases if a requst comes in (non caching???)
