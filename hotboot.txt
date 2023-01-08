@@ -47,3 +47,4 @@ if the worker was marked dead, we should slowly pull in all guild data we need, 
 possily purge and GC any guilds we no longer serve.
 
 Maybe databases and workers should only snapshot on reboots, and list server should request regular well-distributed reboots.
+possibly throw out cluster format, and see if non-threaded read/write are good enough for 2500 guilds (probably fine)
