@@ -1,0 +1,6 @@
+config.json
+RoleKeeper
+data/
+*.dat
+db-dump.*
+RoleKeeper.zip
