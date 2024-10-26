@@ -53,7 +53,7 @@ func GetRoles(s *discordgo.Session, i *discordgo.InteractionCreate, guild *db.Gu
 			if existing.ID == role.ID {
 
 				entry := discordgo.SelectMenuOption{
-					Emoji: discordgo.ComponentEmoji{
+					Emoji: &discordgo.ComponentEmoji{
 						Name: "✅",
 					},
 					Label: role.Name, Value: db.IntToSnowflake(role.ID)}
@@ -162,7 +162,7 @@ func ConfigureBot(s *discordgo.Session, i *discordgo.InteractionCreate, guild *d
 	 */
 	for _, grole := range guild.Roles {
 		entry := discordgo.SelectMenuOption{
-			Emoji: discordgo.ComponentEmoji{
+			Emoji: &discordgo.ComponentEmoji{
 				Name: "✅",
 			},
 			Label: grole.Name, Value: db.IntToSnowflake(grole.ID)}
