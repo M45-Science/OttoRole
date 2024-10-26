@@ -13,7 +13,6 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"runtime/debug"
 	"strconv"
 	"syscall"
 	"time"
@@ -41,8 +40,6 @@ func main() {
 	flag.Parse()
 
 	db.ThreadCount = runtime.NumCPU()
-	//kb, mb, gb
-	debug.SetMemoryLimit(1024 * 1024 * 250)
 
 	glob.Uptime = time.Now().UTC().Round(time.Second)
 	cwlog.StartLog()
