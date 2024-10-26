@@ -2,8 +2,7 @@ package db
 
 import (
 	"RoleKeeper/cons"
-
-	"github.com/sasha-s/go-deadlock"
+	"sync"
 )
 
 type RoleData struct {
@@ -22,13 +21,13 @@ type GuildData struct {
 	Roles    []RoleData `json:",omitempty"`
 
 	/* Not on disk */
-	Lock deadlock.RWMutex `json:"-"`
+	Lock sync.RWMutex `json:"-"`
 }
 
 var (
 	LID_TOP         uint32 = 0
 	GuildLookup     map[uint64]*GuildData
-	GuildLookupLock deadlock.RWMutex
+	GuildLookupLock sync.RWMutex
 	ThreadCount     int
 
 	Database [cons.MaxGuilds]*GuildData
